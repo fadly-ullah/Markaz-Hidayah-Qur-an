@@ -1,0 +1,6 @@
+{
+  "name": "Markaz Hidayah Qur'an",
+  "description": "Website resmi Markaz Hidayah Qur'an: profil pesantren islami modern, pendaftaran santri baru online, galeri kegiatan interaktif, artikel edukasi & SEO, portal donasi mariberbagi.com, serta panel admin.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
