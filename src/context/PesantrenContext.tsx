@@ -136,6 +136,20 @@ interface PesantrenContextType {
   toasts: ToastMessage[];
   showToast: (title: string, message: string, type?: 'success' | 'info' | 'error') => void;
   removeToast: (id: string) => void;
+
+  // Cloud Database & Hosting Sync (Rumahweb)
+  syncApiUrl: string;
+  setSyncApiUrl: (url: string) => void;
+  autoSyncEnabled: boolean;
+  setAutoSyncEnabled: (enabled: boolean) => void;
+  isSyncing: boolean;
+  lastSyncTime: string | null;
+  syncStatus: 'idle' | 'success' | 'error' | 'syncing';
+  syncErrorMessage: string | null;
+  pullFromHosting: (customUrl?: string, silent?: boolean) => Promise<boolean>;
+  pushToHosting: (customUrl?: string, silent?: boolean) => Promise<boolean>;
+  testHostingConnection: (url: string) => Promise<{ ok: boolean; message: string }>;
+  downloadSyncPhpScript: () => void;
 }
 
 const PesantrenContext = createContext<PesantrenContextType | undefined>(undefined);
@@ -285,6 +299,37 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
+  // Cloud Database & Hosting Sync States (Rumahweb)
+  const [syncApiUrl, setSyncApiUrlState] = useState<string>(() => {
+    return (
+      settings.syncApiUrl ||
+      localStorage.getItem('mhq_sync_url_v1') ||
+      ((import.meta as unknown as { env?: { VITE_SYNC_API_URL?: string } }).env?.VITE_SYNC_API_URL as string) ||
+      ''
+    );
+  });
+  const [autoSyncEnabled, setAutoSyncEnabledState] = useState<boolean>(() => {
+    return settings.autoSyncEnabled ?? true;
+  });
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => {
+    return localStorage.getItem('mhq_last_sync_time') || null;
+  });
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error' | 'syncing'>('idle');
+  const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
+
+  const setSyncApiUrl = (url: string) => {
+    const cleanUrl = url.trim();
+    setSyncApiUrlState(cleanUrl);
+    localStorage.setItem('mhq_sync_url_v1', cleanUrl);
+    setSettings((prev) => ({ ...prev, syncApiUrl: cleanUrl }));
+  };
+
+  const setAutoSyncEnabled = (enabled: boolean) => {
+    setAutoSyncEnabledState(enabled);
+    setSettings((prev) => ({ ...prev, autoSyncEnabled: enabled }));
+  };
+
   // Sync to LocalStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
@@ -354,6 +399,318 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
+
+  // Helper untuk membuat snapshot data lengkap
+  const buildCompleteDataSnapshot = () => {
+    return {
+      version: '1.0',
+      syncedAt: new Date().toISOString(),
+      settings,
+      homeContent,
+      profilContent,
+      values,
+      dewanPengasuh,
+      programs,
+      facilities,
+      dailySchedule,
+      targetTimeline,
+      articles,
+      gallery,
+      registrations,
+      announcements
+    };
+  };
+
+  // Download File Script PHP sync.php
+  const downloadSyncPhpScript = () => {
+    const phpScript = `<?php
+/**
+ * Script Sinkronisasi Cloud Markaz Hidayah Qur'an
+ * Simpan file ini di hosting Rumahweb Anda: public_html/api/sync.php
+ */
+
+// Izinkan Cross-Origin Resource Sharing (CORS) agar Vercel dapat membaca & menulis data
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Content-Type: application/json; charset=UTF-8");
+
+// Tangani Preflight Request dari browser
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+$dataFile = __DIR__ . '/pesantren_data.json';
+
+// 1. GET: Ambil Data Pesantren Terbaru
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (file_exists($dataFile)) {
+        echo file_get_contents($dataFile);
+    } else {
+        echo json_encode([
+            "status" => "empty",
+            "message" => "Data belum pernah disinkronkan dari Admin. Silakan lakukan sinkronisasi pertama kali.",
+            "syncedAt" => date('Y-m-d H:i:s')
+        ]);
+    }
+    exit();
+}
+
+// 2. POST: Simpan Data Pesantren Terbaru dari Admin (MacBook / HP)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rawInput = file_get_contents('php://input');
+    $decoded = json_decode($rawInput, true);
+
+    if ($decoded && is_array($decoded)) {
+        $saved = file_put_contents($dataFile, json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        if ($saved !== false) {
+            echo json_encode([
+                "status" => "success",
+                "message" => "Data berhasil disimpan di hosting Rumahweb.",
+                "syncedAt" => date('Y-m-d H:i:s'),
+                "bytes" => $saved
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode([
+                "status" => "error",
+                "message" => "Gagal menulis file pesantren_data.json. Pastikan folder public_html/api/ memiliki permission 755 atau 777."
+            ]);
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode([
+            "status" => "error",
+            "message" => "Format data JSON tidak valid."
+        ]);
+    }
+    exit();
+}
+
+http_response_code(405);
+echo json_encode(["status" => "error", "message" => "Method not allowed"]);
+`;
+
+    const blob = new Blob([phpScript], { type: 'application/x-httpd-php;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'sync.php');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(
+      'Script sync.php Diunduh',
+      'Upload file sync.php ini ke hosting Rumahweb Anda di dalam folder public_html/api/',
+      'info'
+    );
+  };
+
+  // Uji Koneksi ke URL Hosting
+  const testHostingConnection = async (testUrl: string): Promise<{ ok: boolean; message: string }> => {
+    const url = (testUrl || syncApiUrl).trim();
+    if (!url) {
+      return { ok: false, message: 'URL endpoint API Rumahweb belum diisi.' };
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          message: `Server merespon dengan status HTTP ${res.status} (${res.statusText}). Periksa apakah file sync.php sudah di-upload.`
+        };
+      }
+
+      const json = await res.json().catch(() => null);
+      if (!json) {
+        return {
+          ok: false,
+          message: 'Server terhubung tetapi tidak mengembalikan format JSON yang valid.'
+        };
+      }
+
+      return {
+        ok: true,
+        message: 'Koneksi ke hosting Rumahweb BERHASIL! Endpoint siap digunakan untuk sinkronisasi data.'
+      };
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return { ok: false, message: 'Koneksi waktu habis (Timeout 8 detik). Periksa koneksi internet atau server hosting.' };
+      }
+      return {
+        ok: false,
+        message: `Gagal menghubungi server: ${err.message || 'CORS ditolak atau URL salah'}. Pastikan URL diawali https://`
+      };
+    }
+  };
+
+  // Tarik Data dari Hosting (Pull)
+  const pullFromHosting = async (customUrl?: string, silent: boolean = false): Promise<boolean> => {
+    const targetUrl = (customUrl || syncApiUrl).trim();
+    if (!targetUrl) {
+      if (!silent) {
+        showToast('URL Belum Diatur', 'Harap masukkan URL Endpoint API Rumahweb di tab Cloud Sync.', 'error');
+      }
+      return false;
+    }
+
+    setIsSyncing(true);
+    setSyncStatus('syncing');
+    setSyncErrorMessage(null);
+
+    try {
+      const res = await fetch(targetUrl, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
+      if (data && data.status === 'empty') {
+        setSyncStatus('idle');
+        setIsSyncing(false);
+        if (!silent) {
+          showToast('Server Kosong', 'Server hosting terhubung, namun belum ada data tersimpan. Silakan klik tombol Kirim Data.', 'info');
+        }
+        return true;
+      }
+
+      // Jika data valid, perbarui state
+      if (data) {
+        if (data.settings) setSettings(prev => ({ ...prev, ...data.settings, syncApiUrl: targetUrl }));
+        if (data.homeContent) setHomeContent(data.homeContent);
+        if (data.profilContent) setProfilContent(data.profilContent);
+        if (Array.isArray(data.values)) setValues(data.values);
+        if (Array.isArray(data.dewanPengasuh)) setDewanPengasuh(data.dewanPengasuh);
+        if (Array.isArray(data.programs)) setPrograms(data.programs);
+        if (Array.isArray(data.facilities)) setFacilities(data.facilities);
+        if (Array.isArray(data.dailySchedule)) setDailySchedule(data.dailySchedule);
+        if (Array.isArray(data.targetTimeline)) setTargetTimeline(data.targetTimeline);
+        if (Array.isArray(data.articles)) setArticles(data.articles);
+        if (Array.isArray(data.gallery)) setGallery(data.gallery);
+        if (Array.isArray(data.registrations)) setRegistrations(data.registrations);
+        if (Array.isArray(data.announcements)) setAnnouncements(data.announcements);
+
+        const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setLastSyncTime(timeStr);
+        localStorage.setItem('mhq_last_sync_time', timeStr);
+        setSyncStatus('success');
+        setIsSyncing(false);
+
+        if (!silent) {
+          showToast(
+            'Sinkronisasi Sukses',
+            `Data terbaru berhasil ditarik dari hosting Rumahweb (${timeStr} WIB).`,
+            'success'
+          );
+        }
+        return true;
+      }
+
+      throw new Error('Format data tidak sesuai.');
+    } catch (err: any) {
+      console.warn('Gagal sinkronisasi data dari hosting:', err);
+      setSyncStatus('error');
+      setSyncErrorMessage(err.message || 'Gagal memuat data dari hosting');
+      setIsSyncing(false);
+      if (!silent) {
+        showToast(
+          'Gagal Tarik Data',
+          `Tidak dapat memuat data dari hosting: ${err.message || 'Periksa URL dan koneksi internet'}`,
+          'error'
+        );
+      }
+      return false;
+    }
+  };
+
+  // Kirim / Unggah Data ke Hosting (Push)
+  const pushToHosting = async (customUrl?: string, silent: boolean = false): Promise<boolean> => {
+    const targetUrl = (customUrl || syncApiUrl).trim();
+    if (!targetUrl) {
+      if (!silent) {
+        showToast('URL Belum Diatur', 'Harap masukkan URL Endpoint API Rumahweb di tab Cloud Sync.', 'error');
+      }
+      return false;
+    }
+
+    setIsSyncing(true);
+    setSyncStatus('syncing');
+    setSyncErrorMessage(null);
+
+    try {
+      const payload = buildCompleteDataSnapshot();
+      const res = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
+      }
+
+      const resData = await res.json().catch(() => ({}));
+      if (resData.status === 'error') {
+        throw new Error(resData.message || 'Gagal menyimpan data');
+      }
+
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastSyncTime(timeStr);
+      localStorage.setItem('mhq_last_sync_time', timeStr);
+      setSyncStatus('success');
+      setIsSyncing(false);
+
+      if (!silent) {
+        showToast(
+          'Tersimpan di Hosting',
+          `Seluruh artikel, foto, profil, dan data pendaftar berhasil disinkronkan ke server Rumahweb (${timeStr} WIB).`,
+          'success'
+        );
+      }
+      return true;
+    } catch (err: any) {
+      console.warn('Gagal mengirim data ke hosting:', err);
+      setSyncStatus('error');
+      setSyncErrorMessage(err.message || 'Gagal menyimpan ke hosting');
+      setIsSyncing(false);
+      if (!silent) {
+        showToast(
+          'Gagal Sinkronisasi',
+          `Gagal mengirim data ke hosting: ${err.message || 'Periksa koneksi internet atau izin file di cPanel.'}`,
+          'error'
+        );
+      }
+      return false;
+    }
+  };
+
+  // Auto-Pull data pertama kali saat aplikasi dimuat jika URL hosting sudah disetel
+  useEffect(() => {
+    if (syncApiUrl && syncApiUrl.startsWith('http')) {
+      pullFromHosting(syncApiUrl, true);
+    }
+  }, [syncApiUrl]);
 
   const setCurrentRoute = (route: NavigationRoute) => {
     setCurrentRouteState(route);
@@ -788,7 +1145,19 @@ Wassalamu'alaikum Wr. Wb.`;
         closeLightbox,
         toasts,
         showToast,
-        removeToast
+        removeToast,
+        syncApiUrl,
+        setSyncApiUrl,
+        autoSyncEnabled,
+        setAutoSyncEnabled,
+        isSyncing,
+        lastSyncTime,
+        syncStatus,
+        syncErrorMessage,
+        pullFromHosting,
+        pushToHosting,
+        testHostingConnection,
+        downloadSyncPhpScript
       }}
     >
       {children}

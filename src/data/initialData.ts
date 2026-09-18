@@ -57,7 +57,9 @@ export const INITIAL_SETTINGS: SiteSettings = {
   footerBadge2: "Sanad Qira'at Mutashil",
   footerCopyrightText: "Hak Cipta Dilindungi.",
   adminUsername: "admin",
-  adminPassword: "admin123"
+  adminPassword: "admin123",
+  syncApiUrl: "",
+  autoSyncEnabled: true
 };
 
 export const INITIAL_PROGRAMS: Program[] = [

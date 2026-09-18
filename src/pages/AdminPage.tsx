@@ -41,13 +41,15 @@ import {
   PhoneCall,
   Home,
   Compass,
-  Building2
+  Building2,
+  Cloud
 } from 'lucide-react';
 import { SeoPreviewModal } from '../components/SeoPreviewModal';
 import { AdminEditBeranda } from '../components/admin/AdminEditBeranda';
 import { AdminEditProfil } from '../components/admin/AdminEditProfil';
 import { AdminEditProgram } from '../components/admin/AdminEditProgram';
 import { AdminEditFasilitas } from '../components/admin/AdminEditFasilitas';
+import { AdminCloudSync } from '../components/admin/AdminCloudSync';
 import { ImagePickerField } from '../components/admin/ImagePickerField';
 
 export const AdminPage: React.FC = () => {
@@ -68,7 +70,11 @@ export const AdminPage: React.FC = () => {
     updateSettings,
     updateAdminCredentials,
     sendWhatsAppNotification,
-    showToast
+    showToast,
+    syncApiUrl,
+    isSyncing,
+    lastSyncTime,
+    pushToHosting
   } = usePesantren();
 
   // Login form state
@@ -77,7 +83,7 @@ export const AdminPage: React.FC = () => {
 
   // Active Admin Sub-tab
   const [adminTab, setAdminTab] = useState<
-    'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'santri' | 'articles' | 'gallery' | 'settings'
+    'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'santri' | 'articles' | 'gallery' | 'settings' | 'cloud-sync'
   >('dashboard');
 
   // Santri Management Filter
@@ -400,7 +406,23 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {syncApiUrl && (
+              <button
+                type="button"
+                onClick={() => pushToHosting()}
+                disabled={isSyncing}
+                title="Kirim perubahan data dari MacBook ke hosting Rumahweb"
+                className="px-3 py-1.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-xs font-semibold text-teal-300 border border-teal-400/30 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              >
+                <Cloud className={`w-3.5 h-3.5 ${isSyncing ? 'animate-bounce' : ''}`} />
+                <span>{isSyncing ? 'Menyinkronkan...' : 'Sinkronkan ke Hosting'}</span>
+                {lastSyncTime && (
+                  <span className="text-[10px] opacity-75 font-mono">({lastSyncTime})</span>
+                )}
+              </button>
+            )}
+
             <button
               onClick={logoutAdmin}
               className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-200 transition-colors flex items-center gap-1.5"
@@ -521,6 +543,21 @@ export const AdminPage: React.FC = () => {
           >
             <Settings className="w-4 h-4" />
             <span>Header, Footer & Akun</span>
+          </button>
+
+          <button
+            onClick={() => setAdminTab('cloud-sync')}
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              adminTab === 'cloud-sync'
+                ? 'bg-teal-700 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Cloud className="w-4 h-4 text-teal-600" />
+            <span>Cloud Sync (Rumahweb)</span>
+            {syncApiUrl && (
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" title="Hosting Terhubung" />
+            )}
           </button>
         </div>
 
@@ -1626,6 +1663,9 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* 10. CLOUD SYNC & HOSTING RUMAHWEB VIEW */}
+        {adminTab === 'cloud-sync' && <AdminCloudSync />}
       </div>
 
       {/* MODAL FORM TAMBAH / EDIT ARTIKEL DENGAN DUKUNGAN LENGKAP SEO */}

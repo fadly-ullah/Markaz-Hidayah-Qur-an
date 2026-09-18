@@ -256,4 +256,8 @@ export interface SiteSettings {
   // Admin Account Credentials (Editable)
   adminUsername: string;
   adminPassword: string;
+
+  // Cloud Database & Hosting Sync (Rumahweb / Shared Hosting)
+  syncApiUrl?: string;
+  autoSyncEnabled?: boolean;
 }
