@@ -261,3 +261,43 @@ export interface SiteSettings {
   syncApiUrl?: string;
   autoSyncEnabled?: boolean;
 }
+
+export interface DonationProgram {
+  id: string;
+  title: string;
+  target: number;
+  collected: number;
+  donorsCount: number;
+  category: string;
+  description: string;
+  imageUrl: string;
+  directDonationUrl?: string;
+  customDonationUrl?: string;
+  isActive?: boolean;
+}
+
+export interface DonationPageContent {
+  headerBadge: string;
+  headerPartnerBadge: string;
+  headerTitle: string;
+  headerQuote: string;
+  headerButtonText: string;
+  portalDonationUrl: string;
+  waConfirmNumber?: string;
+
+  programsSectionBadge: string;
+  programsSectionTitle: string;
+  programsSectionDesc: string;
+
+  calculatorBadge: string;
+  calculatorTitle: string;
+  calculatorDesc: string;
+  nominalPresets: number[];
+
+  bankSectionBadge: string;
+  bankSectionTitle: string;
+  bankSectionDesc: string;
+
+  accountabilityTitle: string;
+  accountabilityDesc: string;
+}

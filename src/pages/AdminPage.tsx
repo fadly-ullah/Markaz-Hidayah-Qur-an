@@ -49,6 +49,7 @@ import { AdminEditBeranda } from '../components/admin/AdminEditBeranda';
 import { AdminEditProfil } from '../components/admin/AdminEditProfil';
 import { AdminEditProgram } from '../components/admin/AdminEditProgram';
 import { AdminEditFasilitas } from '../components/admin/AdminEditFasilitas';
+import { AdminEditDonasi } from '../components/admin/AdminEditDonasi';
 import { AdminCloudSync } from '../components/admin/AdminCloudSync';
 import { AdminRegistrations } from '../components/admin/AdminRegistrations';
 import { ImagePickerField } from '../components/admin/ImagePickerField';
@@ -79,12 +80,13 @@ export const AdminPage: React.FC = () => {
   } = usePesantren();
 
   // Login form state
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Active Admin Sub-tab
   const [adminTab, setAdminTab] = useState<
-    'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'santri' | 'articles' | 'gallery' | 'settings' | 'cloud-sync'
+    'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'edit-donasi' | 'santri' | 'articles' | 'gallery' | 'settings' | 'cloud-sync'
   >('dashboard');
 
   // Article Modal State
@@ -323,6 +325,8 @@ export const AdminPage: React.FC = () => {
               <input
                 type="text"
                 required
+                autoComplete="username"
+                placeholder="Masukkan username admin"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-teal-500 text-slate-900 font-medium"
@@ -333,13 +337,25 @@ export const AdminPage: React.FC = () => {
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Kata Sandi (Password)
               </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-teal-500 text-slate-900 font-medium"
-              />
+              <div className="relative">
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Masukkan kata sandi"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full text-xs px-3.5 py-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-teal-500 text-slate-900 font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  title={showLoginPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                >
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -350,19 +366,9 @@ export const AdminPage: React.FC = () => {
               <span>Masuk ke Dashboard Admin</span>
             </button>
 
-            {/* Info Kredensial Admin Aktif & Bantuan */}
-            <div className="p-3.5 bg-teal-50/80 border border-teal-200 rounded-xl space-y-1 text-left">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-900">
-                <Key className="w-3.5 h-3.5 text-teal-600" />
-                <span>Kredensial Akses Administrator</span>
-              </div>
-              <div className="text-[11px] text-teal-800 space-y-0.5 pt-0.5">
-                <div>Username aktif: <code className="bg-teal-100 font-mono font-bold px-1.5 py-0.5 rounded text-teal-900">{settings.adminUsername || 'admin'}</code></div>
-                <div>Password aktif: <code className="bg-teal-100 font-mono font-bold px-1.5 py-0.5 rounded text-teal-900">{settings.adminPassword || 'admin123'}</code></div>
-              </div>
-              <p className="text-[10px] text-teal-700/80 pt-1">
-                * Username dan password dapat diubah kapan saja di menu Pengaturan setelah Anda masuk.
-              </p>
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+              <Shield className="w-3.5 h-3.5 text-slate-400" />
+              <span>Akses aman terenkripsi • Hanya staf & administrator resmi</span>
             </div>
           </form>
         </div>
@@ -485,6 +491,18 @@ export const AdminPage: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setAdminTab('edit-donasi')}
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              adminTab === 'edit-donasi'
+                ? 'bg-teal-700 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <HeartHandshake className="w-4 h-4" />
+            <span>Panel Donasi</span>
+          </button>
+
+          <button
             onClick={() => setAdminTab('santri')}
             className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               adminTab === 'santri'
@@ -592,17 +610,25 @@ export const AdminPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+              <div
+                onClick={() => setAdminTab('edit-donasi')}
+                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-2 cursor-pointer hover:border-teal-300 hover:shadow-md transition-all group"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Integrasi Donasi</span>
-                  <div className="p-2 rounded-xl bg-amber-100 text-amber-700">
+                  <div className="p-2 rounded-xl bg-amber-100 text-amber-700 group-hover:bg-teal-100 group-hover:text-teal-700 transition-colors">
                     <HeartHandshake className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-base font-bold text-slate-900 truncate">mariberbagi.net</div>
-                <div className="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Status Gateway: Terhubung Aktif
+                <div className="text-base font-bold text-slate-900 truncate">
+                  {settings.donationUrl ? settings.donationUrl.replace(/^https?:\/\//, '').split('/')[0] : 'mariberbagi.net'}
+                </div>
+                <div className="text-[11px] text-teal-700 font-medium flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Kelola Panel Donasi
+                  </span>
+                  <span className="text-teal-600 font-bold group-hover:translate-x-0.5 transition-transform">→</span>
                 </div>
               </div>
             </div>
@@ -745,7 +771,10 @@ export const AdminPage: React.FC = () => {
         {/* 5. EDIT FASILITAS PESANTREN */}
         {adminTab === 'edit-fasilitas' && <AdminEditFasilitas />}
 
-        {/* 6. DATA PENDAFTAR SANTRI BARU (DENGAN AKSES UBAH, HAPUS, TAMBAH, NOTIF WA) */}
+        {/* 6. EDIT PANEL DONASI & REKENING RESMI YAYASAN */}
+        {adminTab === 'edit-donasi' && <AdminEditDonasi />}
+
+        {/* 7. DATA PENDAFTAR SANTRI BARU (DENGAN AKSES UBAH, HAPUS, TAMBAH, NOTIF WA) */}
         {adminTab === 'santri' && <AdminRegistrations />}
 
         {/* 3. MANAJEMEN ARTIKEL & SEO (User requirement: "artikelnya juga dapat ditambahkan oleh admin dan artikel ini nantinya akan mendukung SEO website ini") */}
@@ -1415,23 +1444,19 @@ export const AdminPage: React.FC = () => {
               {/* Status Kredensial Aktif */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div>
-                  <span className="text-slate-500">Username Aktif Saat Ini:</span>
+                  <span className="text-slate-500">Username Administrator:</span>
                   <div className="font-mono font-bold text-teal-900 text-sm">{settings.adminUsername || 'admin'}</div>
                 </div>
                 <div>
-                  <span className="text-slate-500">Password Aktif:</span>
-                  <div className="font-mono font-bold text-teal-900 text-sm">
-                    {showPassword ? (settings.adminPassword || 'admin123') : '••••••••'}
+                  <span className="text-slate-500">Status Keamanan Sandi:</span>
+                  <div className="font-semibold text-emerald-700 text-xs flex items-center gap-1.5 mt-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tersimpan Rahasia & Terproteksi (••••••••)</span>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-center cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  <span>{showPassword ? 'Sembunyikan' : 'Perlihatkan'}</span>
-                </button>
+                <div className="text-[11px] text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-center sm:text-left">
+                  Gunakan formulir di bawah ini untuk memperbarui kredensial
+                </div>
               </div>
 
               <form onSubmit={handleChangeCredentials} className="space-y-4">

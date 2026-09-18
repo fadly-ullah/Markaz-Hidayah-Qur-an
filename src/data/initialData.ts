@@ -11,7 +11,9 @@ import {
   PesantrenValue,
   DewanPengasuhMember,
   DailyScheduleItem,
-  TargetTimelineItem
+  TargetTimelineItem,
+  DonationProgram,
+  DonationPageContent
 } from '../types';
 
 export const INITIAL_SETTINGS: SiteSettings = {
@@ -658,3 +660,64 @@ export const INITIAL_TARGET_TIMELINE: TargetTimelineItem[] = [
   { id: "tgt-2", year: "Tahun ke-2", juz: "Juz 11 – 20", focus: "Akselerasi Sabaq, Muroja'ah Manzil harian, Bahasa Arab Muhadatsah" },
   { id: "tgt-3", year: "Tahun ke-3", juz: "Juz 21 – 30", focus: "Khatam 30 Juz, Karantina Tasmi' sekali duduk 30 Juz, Pengambilan Sanad" }
 ];
+
+export const INITIAL_DONATION_PROGRAMS: DonationProgram[] = [
+  {
+    id: 'wakaf-asrama',
+    title: 'Wakaf Pembangunan Asrama Santri Putri Tahfidz (Tahap 2)',
+    target: 500000000,
+    collected: 385000000,
+    donorsCount: 2450,
+    category: 'Wakaf Bangunan',
+    description: 'Pembangunan 12 kamar asrama baru, instalasi sanitasi ramah lingkungan, dan ranjang santriwati.',
+    imageUrl: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&w=800&q=80',
+    isActive: true
+  },
+  {
+    id: 'beasiswa-yatim',
+    title: 'Beasiswa Pendidikan Santri Yatim & Dhuafa Penghafal Qur\'an',
+    target: 200000000,
+    collected: 138000000,
+    donorsCount: 1120,
+    category: 'Infaq Pendidikan',
+    description: 'Menjamin biaya SPP, asrama, dan makanan bergizi bagi 25 santri berprestasi dari keluarga dhuafa.',
+    imageUrl: 'https://images.unsplash.com/photo-1590076215667-875d4ef2d7ee?auto=format&fit=crop&w=800&q=80',
+    isActive: true
+  },
+  {
+    id: 'mushaf-alquran',
+    title: 'Wakaf Pengadaan Mushaf Al-Qur\'an Standar Pojok & Kitab Turats',
+    target: 60000000,
+    collected: 49200000,
+    donorsCount: 480,
+    category: 'Wakaf Mushaf',
+    description: 'Pemberian Al-Qur\'an rasm utsmani standar hafalan dan kitab matan Al-Jazari bagi santri baru.',
+    imageUrl: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=800&q=80',
+    isActive: true
+  }
+];
+
+export const INITIAL_DONATION_CONTENT: DonationPageContent = {
+  headerBadge: 'Portal Donasi & Wakaf Umat',
+  headerPartnerBadge: 'Terintegrasi dengan mariberbagi.net',
+  headerTitle: 'Investasi Abadi untuk Penghafal Al-Qur\'an',
+  headerQuote: '"Jika seseorang meninggal dunia, maka terputuslah amalannya kecuali tiga perkara: sedekah jariyah, ilmu yang bermanfaat, dan anak sholeh yang mendoakannya." (HR. Muslim)',
+  headerButtonText: 'Salurkan Donasi Cepat via mariberbagi.net',
+  portalDonationUrl: 'https://mariberbagi.net/pesantren-markazhidayah',
+
+  programsSectionBadge: 'Program Penyaluran Amanah',
+  programsSectionTitle: 'Program Kebutuhan Pesantren yang Sedang Berjalan',
+  programsSectionDesc: 'Setiap rupiah yang Anda salurkan digunakan secara transparan dengan laporan berkala kepada muhsinin.',
+
+  calculatorBadge: 'Kalkulator Sedekah & Infaq',
+  calculatorTitle: 'Pilih Nominal Donasi',
+  calculatorDesc: 'Pilih paket donasi atau ketik nominal sukarela yang Anda niatkan.',
+  nominalPresets: [50000, 100000, 250000, 500000, 1000000],
+
+  bankSectionBadge: 'Kanal Alternatif',
+  bankSectionTitle: 'Rekening Resmi Yayasan Pesantren',
+  bankSectionDesc: 'Anda juga dapat melakukan transfer langsung antar-bank ke rekening yayasan berikut:',
+
+  accountabilityTitle: 'Akuntabilitas & Jaminan Amanah',
+  accountabilityDesc: 'Yayasan Markaz Hidayah Qur\'an memegang teguh prinsip tata kelola amanah (Good Islamic Governance). Seluruh penerimaan dana wakaf dan infaq dilaporkan secara berkala melalui laman Artikel & Publikasi di website ini serta dapat diaudit oleh lembaga pengawas wakaf independen.'
+};

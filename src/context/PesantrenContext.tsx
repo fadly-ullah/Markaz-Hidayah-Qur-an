@@ -13,7 +13,10 @@ import {
   PesantrenValue,
   DewanPengasuhMember,
   DailyScheduleItem,
-  TargetTimelineItem
+  TargetTimelineItem,
+  DonationProgram,
+  DonationPageContent,
+  BankAccount
 } from '../types';
 import {
   INITIAL_ARTICLES,
@@ -28,7 +31,9 @@ import {
   INITIAL_VALUES,
   INITIAL_DEWAN_PENGASUH,
   INITIAL_DAILY_SCHEDULE,
-  INITIAL_TARGET_TIMELINE
+  INITIAL_TARGET_TIMELINE,
+  INITIAL_DONATION_PROGRAMS,
+  INITIAL_DONATION_CONTENT
 } from '../data/initialData';
 
 export type NavigationRoute = 
@@ -97,6 +102,17 @@ interface PesantrenContextType {
   addFacility: (facility: Omit<Facility, 'id'>) => void;
   updateFacility: (id: string, updated: Partial<Facility>) => void;
   deleteFacility: (id: string) => void;
+
+  // Donation & Wakaf Management (Editable)
+  donationContent: DonationPageContent;
+  updateDonationContent: (newContent: Partial<DonationPageContent>) => void;
+  donationPrograms: DonationProgram[];
+  addDonationProgram: (prog: Omit<DonationProgram, 'id'>) => void;
+  updateDonationProgram: (id: string, prog: Partial<DonationProgram>) => void;
+  deleteDonationProgram: (id: string) => void;
+  addBankAccount: (account: BankAccount) => void;
+  updateBankAccount: (index: number, account: BankAccount) => void;
+  deleteBankAccount: (index: number) => void;
 
   // Articles & Gallery & Registrations
   articles: Article[];
@@ -172,7 +188,9 @@ const STORAGE_KEYS = {
   PROGRAMS: 'mhq_programs_v1',
   SCHEDULE: 'mhq_schedule_v1',
   TARGETS: 'mhq_targets_v1',
-  FACILITIES: 'mhq_facilities_v1'
+  FACILITIES: 'mhq_facilities_v1',
+  DONATION_CONTENT: 'mhq_donation_content_v1',
+  DONATION_PROGRAMS: 'mhq_donation_programs_v1'
 };
 
 export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -297,6 +315,38 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return saved ? JSON.parse(saved) : INITIAL_TARGET_TIMELINE;
   });
 
+  const [donationContent, setDonationContent] = useState<DonationPageContent>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.DONATION_CONTENT);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          ...INITIAL_DONATION_CONTENT,
+          ...parsed,
+          nominalPresets: Array.isArray(parsed.nominalPresets) && parsed.nominalPresets.length > 0
+            ? parsed.nominalPresets
+            : INITIAL_DONATION_CONTENT.nominalPresets
+        };
+      } catch {
+        return INITIAL_DONATION_CONTENT;
+      }
+    }
+    return INITIAL_DONATION_CONTENT;
+  });
+
+  const [donationPrograms, setDonationPrograms] = useState<DonationProgram[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.DONATION_PROGRAMS);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        return INITIAL_DONATION_PROGRAMS;
+      }
+    }
+    return INITIAL_DONATION_PROGRAMS;
+  });
+
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem(STORAGE_KEYS.AUTH) === 'true';
   });
@@ -389,6 +439,14 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [targetTimeline]);
 
   useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DONATION_CONTENT, JSON.stringify(donationContent));
+  }, [donationContent]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.DONATION_PROGRAMS, JSON.stringify(donationPrograms));
+  }, [donationPrograms]);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.AUTH, isAdminLoggedIn ? 'true' : 'false');
   }, [isAdminLoggedIn]);
 
@@ -422,7 +480,9 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       articles,
       gallery,
       registrations,
-      announcements
+      announcements,
+      donationContent,
+      donationPrograms
     };
   };
 
@@ -612,6 +672,8 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
         if (Array.isArray(data.gallery)) setGallery(data.gallery);
         if (Array.isArray(data.registrations)) setRegistrations(data.registrations);
         if (Array.isArray(data.announcements)) setAnnouncements(data.announcements);
+        if (data.donationContent) setDonationContent(data.donationContent);
+        if (Array.isArray(data.donationPrograms)) setDonationPrograms(data.donationPrograms);
 
         const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         setLastSyncTime(timeStr);
@@ -852,6 +914,55 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
     showToast('Fasilitas Dihapus', 'Fasilitas berhasil dihapus.', 'info');
   };
 
+  // Donation & Wakaf Operations
+  const updateDonationContent = (newContent: Partial<DonationPageContent>) => {
+    setDonationContent(prev => ({ ...prev, ...newContent }));
+    showToast('Konten Donasi Diperbarui', 'Perubahan informasi portal donasi berhasil disimpan.');
+  };
+
+  const addDonationProgram = (prog: Omit<DonationProgram, 'id'>) => {
+    const newProg: DonationProgram = {
+      ...prog,
+      id: `wakaf-${Date.now()}`
+    };
+    setDonationPrograms(prev => [newProg, ...prev]);
+    showToast('Program Donasi Ditambahkan', `Program "${newProg.title}" berhasil dipublikasikan.`);
+  };
+
+  const updateDonationProgram = (id: string, prog: Partial<DonationProgram>) => {
+    setDonationPrograms(prev => prev.map(p => p.id === id ? { ...p, ...prog } : p));
+    showToast('Program Donasi Diperbarui', 'Data program donasi berhasil diperbarui.');
+  };
+
+  const deleteDonationProgram = (id: string) => {
+    setDonationPrograms(prev => prev.filter(p => p.id !== id));
+    showToast('Program Donasi Dihapus', 'Program donasi berhasil dihapus.', 'info');
+  };
+
+  const addBankAccount = (account: BankAccount) => {
+    setSettings(prev => ({
+      ...prev,
+      bankAccounts: [...prev.bankAccounts, account]
+    }));
+    showToast('Rekening Ditambahkan', `Rekening ${account.bank} berhasil ditambahkan.`);
+  };
+
+  const updateBankAccount = (index: number, account: BankAccount) => {
+    setSettings(prev => ({
+      ...prev,
+      bankAccounts: prev.bankAccounts.map((b, i) => (i === index ? account : b))
+    }));
+    showToast('Rekening Diperbarui', `Rekening ${account.bank} berhasil diperbarui.`);
+  };
+
+  const deleteBankAccount = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      bankAccounts: prev.bankAccounts.filter((_, i) => i !== index)
+    }));
+    showToast('Rekening Dihapus', 'Rekening berhasil dihapus dari daftar kanal donasi.', 'info');
+  };
+
   // Article Operations
   const addArticle = (articleData: Omit<Article, 'id' | 'viewsCount'>): Article => {
     const newArticle: Article = {
@@ -1060,9 +1171,9 @@ Wassalamu'alaikum Wr. Wb.`;
     const validUsername = settings.adminUsername || 'admin';
     const validPassword = settings.adminPassword || 'admin123';
 
-    // Allow user-configured credentials, or fallback defaults/official email
-    const isUserMatch = userInput.trim() === validUsername.trim() || userInput.trim() === 'admin' || userInput.trim() === 'admin@markazhidayah.id';
-    const isPassMatch = passInput === validPassword || passInput === 'admin123' || passInput === 'hidayah2026';
+    // Strictly authenticate against the user-configured admin credentials
+    const isUserMatch = userInput.trim() === validUsername.trim();
+    const isPassMatch = passInput === validPassword;
 
     if (isUserMatch && isPassMatch) {
       setIsAdminLoggedIn(true);
@@ -1148,6 +1259,15 @@ Wassalamu'alaikum Wr. Wb.`;
         addFacility,
         updateFacility,
         deleteFacility,
+        donationContent,
+        updateDonationContent,
+        donationPrograms,
+        addDonationProgram,
+        updateDonationProgram,
+        deleteDonationProgram,
+        addBankAccount,
+        updateBankAccount,
+        deleteBankAccount,
         articles,
         gallery,
         registrations,
