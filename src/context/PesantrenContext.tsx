@@ -116,6 +116,8 @@ interface PesantrenContextType {
   // Registration Actions
   registerNewSantri: (data: Omit<SantriRegistration, 'id' | 'status' | 'registeredAt' | 'waNotificationSent'>) => SantriRegistration;
   updateRegistrationStatus: (id: string, status: RegistrationStatus, notes?: string, testScore?: number) => void;
+  updateRegistration: (id: string, updatedData: Partial<SantriRegistration>) => void;
+  deleteRegistration: (id: string) => void;
   sendWhatsAppNotification: (registrationId: string, templateType?: 'registration_received' | 'test_schedule' | 'acceptance') => string;
 
   // Announcement Actions
@@ -937,6 +939,26 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
     showToast('Status Santri Diperbarui', `Status ${id} kini: ${status}`);
   };
 
+  const updateRegistration = (id: string, updatedData: Partial<SantriRegistration>) => {
+    setRegistrations(prev =>
+      prev.map(reg => {
+        if (reg.id === id) {
+          return {
+            ...reg,
+            ...updatedData
+          };
+        }
+        return reg;
+      })
+    );
+    showToast('Data Pendaftar Diperbarui', `Data pendaftar ${id} berhasil diperbarui.`);
+  };
+
+  const deleteRegistration = (id: string) => {
+    setRegistrations(prev => prev.filter(reg => reg.id !== id));
+    showToast('Data Pendaftar Dihapus', `Data pendaftar ${id} berhasil dihapus dari sistem.`, 'info');
+  };
+
   // WhatsApp automatic messaging engine
   const sendWhatsAppNotification = (
     registrationId: string,
@@ -1137,6 +1159,8 @@ Wassalamu'alaikum Wr. Wb.`;
         deleteGalleryItem,
         registerNewSantri,
         updateRegistrationStatus,
+        updateRegistration,
+        deleteRegistration,
         sendWhatsAppNotification,
         toggleAnnouncement,
         isAdminLoggedIn,

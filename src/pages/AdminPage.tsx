@@ -50,6 +50,7 @@ import { AdminEditProfil } from '../components/admin/AdminEditProfil';
 import { AdminEditProgram } from '../components/admin/AdminEditProgram';
 import { AdminEditFasilitas } from '../components/admin/AdminEditFasilitas';
 import { AdminCloudSync } from '../components/admin/AdminCloudSync';
+import { AdminRegistrations } from '../components/admin/AdminRegistrations';
 import { ImagePickerField } from '../components/admin/ImagePickerField';
 
 export const AdminPage: React.FC = () => {
@@ -85,10 +86,6 @@ export const AdminPage: React.FC = () => {
   const [adminTab, setAdminTab] = useState<
     'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'santri' | 'articles' | 'gallery' | 'settings' | 'cloud-sync'
   >('dashboard');
-
-  // Santri Management Filter
-  const [santriFilter, setSantriFilter] = useState<string>('Semua');
-  const [santriSearch, setSantriSearch] = useState<string>('');
 
   // Article Modal State
   const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
@@ -301,16 +298,6 @@ export const AdminPage: React.FC = () => {
       setEditAdminConfirmPass('');
     }
   };
-
-  // Filtered Santri
-  const filteredSantri = registrations.filter(s => {
-    const matchStatus = santriFilter === 'Semua' || s.status === santriFilter;
-    const matchSearch =
-      s.studentName.toLowerCase().includes(santriSearch.toLowerCase()) ||
-      s.id.toLowerCase().includes(santriSearch.toLowerCase()) ||
-      s.parentPhone.includes(santriSearch);
-    return matchStatus && matchSearch;
-  });
 
   // Not Logged In View
   if (!isAdminLoggedIn) {
@@ -758,161 +745,8 @@ export const AdminPage: React.FC = () => {
         {/* 5. EDIT FASILITAS PESANTREN */}
         {adminTab === 'edit-fasilitas' && <AdminEditFasilitas />}
 
-        {/* 6. DATA PENDAFTAR SANTRI BARU */}
-        {adminTab === 'santri' && (
-          <div className="space-y-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Manajemen Data Pendaftar Santri</h2>
-                <p className="text-xs text-slate-500">
-                  Verifikasi berkas, tentukan jadwal tes talaqqi, ubah status penerimaan, dan kirim notifikasi otomatis WhatsApp.
-                </p>
-              </div>
-
-              {/* Search & Filter */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Cari nama / no reg / WA..."
-                    value={santriSearch}
-                    onChange={(e) => setSantriSearch(e.target.value)}
-                    className="text-xs pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-
-                <select
-                  value={santriFilter}
-                  onChange={(e) => setSantriFilter(e.target.value)}
-                  className="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-teal-500 font-medium text-slate-700"
-                >
-                  <option value="Semua">Semua Status ({registrations.length})</option>
-                  <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
-                  <option value="Lolos Berkas">Lolos Berkas</option>
-                  <option value="Jadwal Tes Seleksi">Jadwal Tes Seleksi</option>
-                  <option value="Diterima">Diterima</option>
-                  <option value="Ditolak">Ditolak</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700 border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-900">
-                    <th className="p-3">No. Reg</th>
-                    <th className="p-3">Nama Santri</th>
-                    <th className="p-3">Program</th>
-                    <th className="p-3">Wali & WhatsApp</th>
-                    <th className="p-3">Tgl Daftar</th>
-                    <th className="p-3">Status Saat Ini</th>
-                    <th className="p-3 text-right">Aksi Notifikasi WA</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredSantri.map((santri) => (
-                    <tr key={santri.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="p-3 font-mono font-bold text-teal-800">
-                        {santri.id}
-                      </td>
-                      <td className="p-3">
-                        <div className="font-bold text-slate-900">{santri.studentName}</div>
-                        <div className="text-[11px] text-slate-400">{santri.gender} • Asal: {santri.previousSchool}</div>
-                      </td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium">
-                          {santri.programChoice}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <div>{santri.parentName} ({santri.parentRelation})</div>
-                        <div className="font-mono text-teal-700 font-semibold">{santri.parentPhone}</div>
-                      </td>
-                      <td className="p-3 text-slate-500 whitespace-nowrap">
-                        {santri.registeredAt}
-                      </td>
-                      <td className="p-3">
-                        <select
-                          value={santri.status}
-                          onChange={(e) => {
-                            updateRegistrationStatus(santri.id, e.target.value as RegistrationStatus);
-                            showToast('Status Diperbarui', `Status ${santri.studentName} diubah menjadi "${e.target.value}".`);
-                          }}
-                          className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition-all ${
-                            santri.status === 'Diterima'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                              : santri.status === 'Jadwal Tes Seleksi'
-                              ? 'bg-sky-50 text-sky-800 border-sky-300'
-                              : santri.status === 'Lolos Berkas'
-                              ? 'bg-teal-50 text-teal-800 border-teal-300'
-                              : santri.status === 'Ditolak'
-                              ? 'bg-rose-50 text-rose-800 border-rose-300'
-                              : 'bg-amber-50 text-amber-800 border-amber-300'
-                          }`}
-                        >
-                          <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
-                          <option value="Lolos Berkas">Lolos Berkas</option>
-                          <option value="Jadwal Tes Seleksi">Jadwal Tes Seleksi</option>
-                          <option value="Diterima">Diterima</option>
-                          <option value="Ditolak">Ditolak</option>
-                        </select>
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {santri.status === 'Jadwal Tes Seleksi' ? (
-                            <button
-                              onClick={() => {
-                                const url = sendWhatsAppNotification(santri.id, 'test_schedule');
-                                window.open(url, '_blank');
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-[11px] border border-sky-200 transition-colors"
-                              title="Kirim Undangan Jadwal Tes Seleksi via WA"
-                            >
-                              <MessageCircle className="w-3 h-3 text-sky-600" />
-                              <span>Undangan Tes</span>
-                            </button>
-                          ) : santri.status === 'Diterima' ? (
-                            <button
-                              onClick={() => {
-                                const url = sendWhatsAppNotification(santri.id, 'acceptance');
-                                window.open(url, '_blank');
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] border border-emerald-200 transition-colors"
-                              title="Kirim Pengumuman Diterima via WA"
-                            >
-                              <MessageCircle className="w-3 h-3 text-emerald-600" />
-                              <span>Notif Diterima</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                const url = sendWhatsAppNotification(santri.id, 'registration_received');
-                                window.open(url, '_blank');
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-[11px] border border-teal-200 transition-colors"
-                              title="Kirim Bukti Registrasi via WA"
-                            >
-                              <MessageCircle className="w-3 h-3 text-teal-600" />
-                              <span>Kirim Bukti</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredSantri.length === 0 && (
-              <div className="text-center py-10 text-slate-400 text-xs">
-                Tidak ada data pendaftar yang sesuai kriteria pencarian.
-              </div>
-            )}
-          </div>
-        )}
+        {/* 6. DATA PENDAFTAR SANTRI BARU (DENGAN AKSES UBAH, HAPUS, TAMBAH, NOTIF WA) */}
+        {adminTab === 'santri' && <AdminRegistrations />}
 
         {/* 3. MANAJEMEN ARTIKEL & SEO (User requirement: "artikelnya juga dapat ditambahkan oleh admin dan artikel ini nantinya akan mendukung SEO website ini") */}
         {adminTab === 'articles' && (
