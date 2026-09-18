@@ -154,6 +154,8 @@ interface PesantrenContextType {
 
 const PesantrenContext = createContext<PesantrenContextType | undefined>(undefined);
 
+const DEFAULT_SYNC_API_URL = 'https://api.hidayahquran.id/sync.php';
+
 const STORAGE_KEYS = {
   SETTINGS: 'mhq_settings_v1',
   ARTICLES: 'mhq_articles_v1',
@@ -198,7 +200,8 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           adminPassword: parsed.adminPassword || INITIAL_SETTINGS.adminPassword,
           donationUrl: parsed.donationUrl?.includes('mariberbagi.com')
             ? parsed.donationUrl.replace('mariberbagi.com', 'mariberbagi.net')
-            : (parsed.donationUrl || INITIAL_SETTINGS.donationUrl)
+            : (parsed.donationUrl || INITIAL_SETTINGS.donationUrl),
+          syncApiUrl: parsed.syncApiUrl || DEFAULT_SYNC_API_URL
         };
       } catch {
         return INITIAL_SETTINGS;
@@ -305,7 +308,7 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       settings.syncApiUrl ||
       localStorage.getItem('mhq_sync_url_v1') ||
       ((import.meta as unknown as { env?: { VITE_SYNC_API_URL?: string } }).env?.VITE_SYNC_API_URL as string) ||
-      ''
+      DEFAULT_SYNC_API_URL
     );
   });
   const [autoSyncEnabled, setAutoSyncEnabledState] = useState<boolean>(() => {

@@ -58,7 +58,7 @@ export const INITIAL_SETTINGS: SiteSettings = {
   footerCopyrightText: "Hak Cipta Dilindungi.",
   adminUsername: "admin",
   adminPassword: "admin123",
-  syncApiUrl: "",
+  syncApiUrl: "https://api.hidayahquran.id/sync.php",
   autoSyncEnabled: true
 };
 
