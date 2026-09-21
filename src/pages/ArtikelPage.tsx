@@ -21,16 +21,21 @@ export const ArtikelPage: React.FC = () => {
   ];
 
   const publishedArticles = useMemo(() => {
-    return articles.filter(a => !a.status || a.status.toLowerCase() === 'published');
+    return (articles || []).filter(a => a && (!a.status || a.status.toLowerCase() === 'published'));
   }, [articles]);
 
   const filteredArticles = useMemo(() => {
     return publishedArticles.filter(art => {
+      if (!art) return false;
       const matchCat = selectedCategory === 'Semua' || art.category === selectedCategory;
+      const title = (art.title || '').toLowerCase();
+      const summary = (art.summary || '').toLowerCase();
+      const keywords = (art.seoKeywords || '').toLowerCase();
+      const q = (searchQuery || '').toLowerCase();
       const matchSearch =
-        art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        art.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        art.seoKeywords.toLowerCase().includes(searchQuery.toLowerCase());
+        title.includes(q) ||
+        summary.includes(q) ||
+        keywords.includes(q);
       return matchCat && matchSearch;
     });
   }, [publishedArticles, selectedCategory, searchQuery]);

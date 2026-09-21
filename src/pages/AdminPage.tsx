@@ -875,20 +875,20 @@ export const AdminPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {articles.map((art) => (
-                    <tr key={art.id} className="hover:bg-slate-50/70 transition-colors">
+                  {(articles || []).filter(Boolean).map((art) => (
+                    <tr key={art.id || Math.random()} className="hover:bg-slate-50/70 transition-colors">
                       <td className="p-3 w-16">
                         <img
-                          src={art.thumbnail || null}
-                          alt={art.title}
+                          src={art.thumbnail || ''}
+                          alt={art.title || 'Artikel'}
                           className="w-12 h-10 object-cover rounded-lg bg-slate-100"
                           referrerPolicy="no-referrer"
                         />
                       </td>
                       <td className="p-3">
-                        <div className="font-bold text-slate-900">{art.title}</div>
+                        <div className="font-bold text-slate-900">{art.title || 'Tanpa Judul'}</div>
                         <div className="text-[11px] text-slate-400 truncate max-w-sm">
-                          Slug: <code>/artikel/{art.slug}</code>
+                          Slug: <code>/artikel/{art.slug || 'artikel'}</code>
                         </div>
                       </td>
                       <td className="p-3">

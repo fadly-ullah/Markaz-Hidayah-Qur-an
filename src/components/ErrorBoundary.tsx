@@ -1,62 +1,33 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 import { AlertTriangle, RefreshCw, Home, LogIn } from 'lucide-react';
 
 interface Props {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorInfo: null };
+export class ErrorBoundary extends (React.Component as any) {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({ errorInfo });
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  private handleReset = () => {
-    // Bersihkan sesi yang berpotensi korup jika ada
-    try {
-      localStorage.removeItem('mhq_user_role_v1');
-      localStorage.removeItem('mhq_logged_author_v1');
-    } catch {
-      // ignore
-    }
-    window.location.hash = '';
-    window.location.reload();
-  };
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary error:', error, errorInfo);
+  }
 
-  private handleGoHome = () => {
-    window.location.hash = '#home';
-    window.location.reload();
-  };
-
-  private handleGoLogin = () => {
-    try {
-      localStorage.removeItem('mhq_user_role_v1');
-      localStorage.removeItem('mhq_logged_author_v1');
-      localStorage.removeItem('mhq_admin_auth_v1');
-    } catch {
-      // ignore
-    }
-    window.location.hash = '#admin';
-    window.location.reload();
-  };
-
-  public render() {
+  render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4">
@@ -88,7 +59,14 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
                 type="button"
-                onClick={this.handleReset}
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('mhq_user_role_v1');
+                    localStorage.removeItem('mhq_logged_author_v1');
+                  } catch {}
+                  window.location.hash = '';
+                  window.location.reload();
+                }}
                 className="w-full py-3 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -97,7 +75,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
               <button
                 type="button"
-                onClick={this.handleGoLogin}
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('mhq_user_role_v1');
+                    localStorage.removeItem('mhq_logged_author_v1');
+                    localStorage.removeItem('mhq_admin_auth_v1');
+                  } catch {}
+                  window.location.hash = '#admin';
+                  window.location.reload();
+                }}
                 className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
               >
                 <LogIn className="w-4 h-4" />
@@ -108,7 +94,10 @@ export class ErrorBoundary extends Component<Props, State> {
             <div>
               <button
                 type="button"
-                onClick={this.handleGoHome}
+                onClick={() => {
+                  window.location.hash = '#home';
+                  window.location.reload();
+                }}
                 className="text-xs text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1.5"
               >
                 <Home className="w-3.5 h-3.5" />

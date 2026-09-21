@@ -22,7 +22,7 @@ export const HomePage: React.FC = () => {
   const { setCurrentRoute, programs, facilities, articles, gallery, openLightbox, navigateToArticle, settings, homeContent } = usePesantren();
 
   // Tampilkan seluruh artikel publikasi tanpa dibatasi jumlahnya
-  const displayedArticles = articles.filter(a => !a.status || a.status.toLowerCase() === 'published');
+  const displayedArticles = (articles || []).filter(a => a && (!a.status || a.status.toLowerCase() === 'published'));
   const previewGallery = gallery.slice(0, 6);
 
   return (

@@ -20,10 +20,27 @@ export const ArtikelDetailPage: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [showSeoModal, setShowSeoModal] = useState(false);
 
-  const article = articles.find(a => a.slug === selectedArticleSlug) || articles[0];
+  const validArticles = (articles || []).filter(Boolean);
+  const article = validArticles.find(a => a && a.slug === selectedArticleSlug) || validArticles[0] || {
+    id: 'default',
+    title: 'Artikel Pesantren',
+    slug: 'artikel-pesantren',
+    category: 'Berita Pesantren',
+    author: 'Redaksi',
+    date: '1 Januari 2026',
+    readTime: '3 menit',
+    thumbnail: '',
+    summary: '',
+    content: '',
+    tags: ['pesantren'],
+    status: 'Published',
+    seoTitle: 'Artikel Pesantren',
+    seoDescription: 'Artikel Markaz Hidayah Qur\'an',
+    seoKeywords: 'pesantren'
+  };
 
-  const relatedArticles = articles
-    .filter(a => a.id !== article.id && a.status === 'Published')
+  const relatedArticles = validArticles
+    .filter(a => a && a.id !== article.id && (!a.status || a.status === 'Published'))
     .slice(0, 3);
 
   const handleShareWhatsApp = () => {
