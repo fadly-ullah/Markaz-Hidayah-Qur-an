@@ -627,10 +627,12 @@ export const AuthorPanel: React.FC = () => {
       )}
 
       {/* SEO MODAL PREVIEW */}
-      <SeoPreviewModal
-        article={seoPreviewArticle}
-        onClose={() => setSeoPreviewArticle(null)}
-      />
+      {seoPreviewArticle && (
+        <SeoPreviewModal
+          article={seoPreviewArticle}
+          onClose={() => setSeoPreviewArticle(null)}
+        />
+      )}
     </div>
   );
 };

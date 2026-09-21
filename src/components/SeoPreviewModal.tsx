@@ -8,8 +8,22 @@ interface SeoPreviewModalProps {
 }
 
 export const SeoPreviewModal: React.FC<Article | SeoPreviewModalProps> = (props) => {
-  const article: Article = 'article' in props ? props.article : props;
-  const onClose = 'onClose' in props ? props.onClose : () => {};
+  const rawArticle: any = props && ('article' in props ? props.article : props);
+  const article: Article = rawArticle && typeof rawArticle === 'object' ? rawArticle : {
+    id: 'default',
+    title: 'Artikel',
+    slug: 'artikel',
+    category: 'Umum',
+    author: 'Redaksi',
+    date: '1 Januari 2026',
+    readTime: '3 menit',
+    thumbnail: '',
+    summary: '',
+    content: '',
+    tags: [],
+    status: 'Published'
+  };
+  const onClose = props && 'onClose' in props && typeof props.onClose === 'function' ? props.onClose : () => {};
 
   const [activeTab, setActiveTab] = useState<'google' | 'social' | 'schema'>('google');
   const [copied, setCopied] = useState(false);
