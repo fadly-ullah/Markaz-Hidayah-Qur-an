@@ -223,9 +223,46 @@ const STORAGE_KEYS = {
 };
 
 export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Navigation State
-  const [currentRoute, setCurrentRouteState] = useState<NavigationRoute>('home');
+  // Navigation State with URL Hash & Query parameter support
+  const [currentRoute, setCurrentRouteState] = useState<NavigationRoute>(() => {
+    try {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get('page')?.toLowerCase() || params.get('route')?.toLowerCase();
+      const target = hash || page;
+      if (target === 'admin' || target === 'penulis' || target === 'author') return 'admin';
+      if (target === 'profil') return 'profil';
+      if (target === 'program') return 'program';
+      if (target === 'fasilitas') return 'fasilitas';
+      if (target === 'galeri') return 'galeri';
+      if (target === 'artikel') return 'artikel';
+      if (target === 'donasi') return 'donasi';
+      if (target === 'pendaftaran') return 'pendaftaran';
+      if (target === 'kontak') return 'kontak';
+    } catch {
+      // fallback
+    }
+    return 'home';
+  });
   const [selectedArticleSlug, setSelectedArticleSlug] = useState<string | null>(null);
+
+  // Synchronize route with URL hash listener
+  useEffect(() => {
+    const handleHash = () => {
+      try {
+        const hash = window.location.hash.replace('#', '').toLowerCase();
+        if (hash === 'admin' || hash === 'penulis' || hash === 'author') {
+          setCurrentRouteState('admin');
+        } else if (['home', 'profil', 'program', 'fasilitas', 'galeri', 'artikel', 'donasi', 'pendaftaran', 'kontak'].includes(hash)) {
+          setCurrentRouteState(hash as NavigationRoute);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // Core Data States with LocalStorage fallback
   const [settings, setSettings] = useState<SiteSettings>(() => {
@@ -999,6 +1036,19 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
 
   const setCurrentRoute = (route: NavigationRoute) => {
     setCurrentRouteState(route);
+    try {
+      if (route === 'admin') {
+        window.location.hash = currentUserRole === 'author' ? 'penulis' : 'admin';
+      } else if (route === 'home') {
+        if (window.location.hash) {
+          history.pushState(null, '', window.location.pathname + window.location.search);
+        }
+      } else {
+        window.location.hash = route;
+      }
+    } catch {
+      // ignore
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1455,7 +1505,8 @@ Wassalamu'alaikum Wr. Wb.`;
     }
 
     // 2. Cek kredensial Akun Penulis / Redaksi
-    const matchedAuthor = authorAccounts.find(
+    const list = Array.isArray(authorAccounts) && authorAccounts.length > 0 ? authorAccounts : INITIAL_AUTHOR_ACCOUNTS;
+    const matchedAuthor = list.find(
       acc => acc.isActive && acc.username.trim().toLowerCase() === userInput.trim().toLowerCase() && acc.password === passInput
     );
     if (matchedAuthor) {

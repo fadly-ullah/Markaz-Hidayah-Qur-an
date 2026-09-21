@@ -90,18 +90,18 @@ export const AuthorPanel: React.FC = () => {
 
   const handleOpenEditModal = (art: Article) => {
     setEditingArticleId(art.id);
-    setArtTitle(art.title);
-    setArtSlug(art.slug);
-    setArtCategory(art.category);
-    setArtAuthor(art.author);
-    setArtReadTime(art.readTime);
-    setArtThumbnail(art.thumbnail);
-    setArtSummary(art.summary);
-    setArtContent(art.content);
-    setArtTags(art.tags.join(', '));
-    setArtSeoTitle(art.seoTitle);
-    setArtSeoDesc(art.seoDescription);
-    setArtSeoKeywords(art.seoKeywords);
+    setArtTitle(art.title || '');
+    setArtSlug(art.slug || '');
+    setArtCategory(art.category || 'Berita Pesantren');
+    setArtAuthor(art.author || loggedInAuthor?.name || 'Redaksi Markaz Hidayah');
+    setArtReadTime(art.readTime || '4 menit');
+    setArtThumbnail(art.thumbnail || '');
+    setArtSummary(art.summary || '');
+    setArtContent(art.content || '');
+    setArtTags(Array.isArray(art.tags) ? art.tags.join(', ') : (art.tags || ''));
+    setArtSeoTitle(art.seoTitle || '');
+    setArtSeoDesc(art.seoDescription || '');
+    setArtSeoKeywords(art.seoKeywords || '');
     setArtStatus(art.status || 'Published');
     setIsArticleModalOpen(true);
   };
@@ -176,13 +176,17 @@ export const AuthorPanel: React.FC = () => {
     }
   };
 
-  // Filter articles
-  const filteredArticles = articles.filter((art) => {
-    const matchCat = selectedCategory === 'Semua' || art.category === selectedCategory;
-    const matchSearch =
-      art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      art.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      art.author.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter articles safely
+  const filteredArticles = (articles || []).filter((art) => {
+    if (!art) return false;
+    const cat = art.category || '';
+    const matchCat = selectedCategory === 'Semua' || cat === selectedCategory;
+    const q = (searchQuery || '').toLowerCase().trim();
+    if (!q) return matchCat;
+    const title = (art.title || '').toLowerCase();
+    const summary = (art.summary || '').toLowerCase();
+    const author = (art.author || '').toLowerCase();
+    const matchSearch = title.includes(q) || summary.includes(q) || author.includes(q);
     return matchCat && matchSearch;
   });
 
@@ -203,7 +207,7 @@ export const AuthorPanel: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Selamat datang, <strong>{loggedInAuthor?.name || 'Penulis'}</strong> ({loggedInAuthor?.username}). Fokus tulis, kelola, dan posting artikel ke hosting.
+                Selamat datang, <strong>{loggedInAuthor?.name || 'Penulis'}</strong>{loggedInAuthor?.username ? ` (@${loggedInAuthor.username})` : ''}. Fokus tulis, kelola, dan posting artikel ke hosting.
               </p>
             </div>
           </div>
@@ -308,15 +312,18 @@ export const AuthorPanel: React.FC = () => {
             >
               <div className="relative h-44 bg-slate-100 overflow-hidden">
                 <img
-                  src={art.thumbnail || null}
-                  alt={art.title}
+                  src={art.thumbnail || 'https://images.unsplash.com/photo-1584286595398-a59f21d313f5?auto=format&fit=crop&w=800&q=80'}
+                  alt={art.title || 'Artikel Pesantren'}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1584286595398-a59f21d313f5?auto=format&fit=crop&w=800&q=80';
+                  }}
                 />
-                <span className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-teal-600 text-white">
-                  {art.category}
+                <span className="absolute top-3 left-3 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-teal-600 text-white shadow-xs">
+                  {art.category || 'Berita'}
                 </span>
-                <span className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                <span className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-xs ${
                   art.status === 'Draft' ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white'
                 }`}>
                   {art.status || 'Published'}
@@ -326,24 +333,24 @@ export const AuthorPanel: React.FC = () => {
               <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>{art.date}</span>
+                    <span>{art.date || ''}</span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {art.readTime}
+                      {art.readTime || '3 menit'}
                     </span>
                     <span>•</span>
                     <span className="text-teal-700 font-medium truncate max-w-[120px]">
-                      {art.author}
+                      {art.author || 'Redaksi'}
                     </span>
                   </div>
 
                   <h3 className="font-bold text-sm text-slate-900 leading-snug line-clamp-2">
-                    {art.title}
+                    {art.title || 'Tanpa Judul'}
                   </h3>
 
                   <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                    {art.summary}
+                    {art.summary || (art.content ? art.content.slice(0, 100) : '')}
                   </p>
                 </div>
 

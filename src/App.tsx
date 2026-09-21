@@ -5,6 +5,7 @@ import { Footer } from './components/Footer';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { GalleryLightbox } from './components/GalleryLightbox';
 import { ToastContainer } from './components/ToastContainer';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -74,8 +75,10 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <PesantrenProvider>
-      <AppContent />
-    </PesantrenProvider>
+    <ErrorBoundary>
+      <PesantrenProvider>
+        <AppContent />
+      </PesantrenProvider>
+    </ErrorBoundary>
   );
 }
