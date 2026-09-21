@@ -538,7 +538,7 @@ export const AdminEditProfil: React.FC = () => {
               <div>
                 <div className="h-44 bg-slate-200 overflow-hidden relative">
                   <img
-                    src={d.photo}
+                    src={d.photo || null}
                     alt={d.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

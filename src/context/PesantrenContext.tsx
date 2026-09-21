@@ -16,7 +16,11 @@ import {
   TargetTimelineItem,
   DonationProgram,
   DonationPageContent,
-  BankAccount
+  BankAccount,
+  EducationFeeItem,
+  ScholarshipInfo,
+  AuthorAccount,
+  UserRole
 } from '../types';
 import {
   INITIAL_ARTICLES,
@@ -33,7 +37,10 @@ import {
   INITIAL_DAILY_SCHEDULE,
   INITIAL_TARGET_TIMELINE,
   INITIAL_DONATION_PROGRAMS,
-  INITIAL_DONATION_CONTENT
+  INITIAL_DONATION_CONTENT,
+  INITIAL_FEE_ITEMS,
+  INITIAL_SCHOLARSHIP_INFO,
+  INITIAL_AUTHOR_ACCOUNTS
 } from '../data/initialData';
 
 export type NavigationRoute = 
@@ -139,6 +146,22 @@ interface PesantrenContextType {
   // Announcement Actions
   toggleAnnouncement: (id: string) => void;
 
+  // Biaya Pendidikan & Beasiswa Actions
+  feeItems: EducationFeeItem[];
+  scholarshipInfo: ScholarshipInfo;
+  updateFeeItem: (id: string, updated: Partial<EducationFeeItem>) => void;
+  addFeeItem: (item: Omit<EducationFeeItem, 'id'>) => EducationFeeItem;
+  deleteFeeItem: (id: string) => void;
+  updateScholarshipInfo: (updated: Partial<ScholarshipInfo>) => void;
+
+  // Author & Role Management
+  authorAccounts: AuthorAccount[];
+  currentUserRole: UserRole | null;
+  loggedInAuthor: AuthorAccount | null;
+  addAuthorAccount: (account: Omit<AuthorAccount, 'id' | 'createdAt'>) => AuthorAccount;
+  updateAuthorAccount: (id: string, updated: Partial<AuthorAccount>) => void;
+  deleteAuthorAccount: (id: string) => void;
+
   // Admin Auth
   isAdminLoggedIn: boolean;
   loginAdmin: (user: string, pass: string) => boolean;
@@ -166,6 +189,7 @@ interface PesantrenContextType {
   syncErrorMessage: string | null;
   pullFromHosting: (customUrl?: string, silent?: boolean) => Promise<boolean>;
   pushToHosting: (customUrl?: string, silent?: boolean) => Promise<boolean>;
+  pushArticlesToHosting: () => Promise<boolean>;
   testHostingConnection: (url: string) => Promise<{ ok: boolean; message: string }>;
   downloadSyncPhpScript: () => void;
 }
@@ -190,7 +214,12 @@ const STORAGE_KEYS = {
   TARGETS: 'mhq_targets_v1',
   FACILITIES: 'mhq_facilities_v1',
   DONATION_CONTENT: 'mhq_donation_content_v1',
-  DONATION_PROGRAMS: 'mhq_donation_programs_v1'
+  DONATION_PROGRAMS: 'mhq_donation_programs_v1',
+  FEES: 'mhq_fees_v1',
+  SCHOLARSHIP: 'mhq_scholarship_v1',
+  AUTHORS: 'mhq_authors_v1',
+  USER_ROLE: 'mhq_user_role_v1',
+  LOGGED_AUTHOR: 'mhq_logged_author_v1'
 };
 
 export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -218,6 +247,7 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           footerCopyrightText: parsed.footerCopyrightText || INITIAL_SETTINGS.footerCopyrightText,
           adminUsername: parsed.adminUsername || INITIAL_SETTINGS.adminUsername,
           adminPassword: parsed.adminPassword || INITIAL_SETTINGS.adminPassword,
+          logoUrl: parsed.logoUrl && parsed.logoUrl.trim() !== '' ? parsed.logoUrl.trim() : undefined,
           donationUrl: parsed.donationUrl?.includes('mariberbagi.com')
             ? parsed.donationUrl.replace('mariberbagi.com', 'mariberbagi.net')
             : (parsed.donationUrl || INITIAL_SETTINGS.donationUrl),
@@ -351,6 +381,66 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return localStorage.getItem(STORAGE_KEYS.AUTH) === 'true';
   });
 
+  // User Role & Logged-in Author Account State
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(() => {
+    const savedRole = localStorage.getItem(STORAGE_KEYS.USER_ROLE);
+    if (savedRole === 'admin' || savedRole === 'author') return savedRole;
+    return localStorage.getItem(STORAGE_KEYS.AUTH) === 'true' ? 'admin' : null;
+  });
+
+  const [loggedInAuthor, setLoggedInAuthor] = useState<AuthorAccount | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.LOGGED_AUTHOR);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  // Biaya Pendidikan & Beasiswa States
+  const [feeItems, setFeeItems] = useState<EducationFeeItem[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.FEES);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {
+        return INITIAL_FEE_ITEMS;
+      }
+    }
+    return INITIAL_FEE_ITEMS;
+  });
+
+  const [scholarshipInfo, setScholarshipInfo] = useState<ScholarshipInfo>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.SCHOLARSHIP);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...INITIAL_SCHOLARSHIP_INFO, ...parsed };
+      } catch {
+        return INITIAL_SCHOLARSHIP_INFO;
+      }
+    }
+    return INITIAL_SCHOLARSHIP_INFO;
+  });
+
+  // Author Accounts State (dikelola oleh Admin Pusat)
+  const [authorAccounts, setAuthorAccounts] = useState<AuthorAccount[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.AUTHORS);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {
+        return INITIAL_AUTHOR_ACCOUNTS;
+      }
+    }
+    return INITIAL_AUTHOR_ACCOUNTS;
+  });
+
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -450,6 +540,34 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.setItem(STORAGE_KEYS.AUTH, isAdminLoggedIn ? 'true' : 'false');
   }, [isAdminLoggedIn]);
 
+  useEffect(() => {
+    if (currentUserRole) {
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, currentUserRole);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+    }
+  }, [currentUserRole]);
+
+  useEffect(() => {
+    if (loggedInAuthor) {
+      localStorage.setItem(STORAGE_KEYS.LOGGED_AUTHOR, JSON.stringify(loggedInAuthor));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.LOGGED_AUTHOR);
+    }
+  }, [loggedInAuthor]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.FEES, JSON.stringify(feeItems));
+  }, [feeItems]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SCHOLARSHIP, JSON.stringify(scholarshipInfo));
+  }, [scholarshipInfo]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.AUTHORS, JSON.stringify(authorAccounts));
+  }, [authorAccounts]);
+
   // Toast system
   const showToast = (title: string, message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
@@ -482,7 +600,10 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       registrations,
       announcements,
       donationContent,
-      donationPrograms
+      donationPrograms,
+      feeItems,
+      scholarshipInfo,
+      authorAccounts
     };
   };
 
@@ -494,7 +615,11 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
  * Simpan file ini di hosting Rumahweb Anda: public_html/api/sync.php
  */
 
-// Izinkan Cross-Origin Resource Sharing (CORS) agar Vercel dapat membaca & menulis data
+@ini_set('memory_limit', '256M');
+@ini_set('post_max_size', '64M');
+@ini_set('upload_max_filesize', '64M');
+
+// Izinkan Cross-Origin Resource Sharing (CORS)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -522,13 +647,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit();
 }
 
-// 2. POST: Simpan Data Pesantren Terbaru dari Admin (MacBook / HP)
+// 2. POST: Simpan Data Pesantren Terbaru / Update Artikel Khusus
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawInput = file_get_contents('php://input');
     $decoded = json_decode($rawInput, true);
 
     if ($decoded && is_array($decoded)) {
-        $saved = file_put_contents($dataFile, json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        // Cek jika update khusus artikel dari Panel Redaksi / Penulis
+        if (isset($decoded['type']) && $decoded['type'] === 'articles' && isset($decoded['articles'])) {
+            $currentData = [];
+            if (file_exists($dataFile)) {
+                $existing = json_decode(file_get_contents($dataFile), true);
+                if (is_array($existing)) {
+                    $currentData = $existing;
+                }
+            }
+            $currentData['articles'] = $decoded['articles'];
+            $currentData['syncedAt'] = date('Y-m-d H:i:s');
+            $dataToSave = $currentData;
+        } else {
+            $dataToSave = $decoded;
+        }
+
+        $saved = file_put_contents($dataFile, json_encode($dataToSave, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         if ($saved !== false) {
             echo json_encode([
                 "status" => "success",
@@ -674,6 +815,9 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
         if (Array.isArray(data.announcements)) setAnnouncements(data.announcements);
         if (data.donationContent) setDonationContent(data.donationContent);
         if (Array.isArray(data.donationPrograms)) setDonationPrograms(data.donationPrograms);
+        if (Array.isArray(data.feeItems)) setFeeItems(data.feeItems);
+        if (data.scholarshipInfo) setScholarshipInfo(data.scholarshipInfo);
+        if (Array.isArray(data.authorAccounts)) setAuthorAccounts(data.authorAccounts);
 
         const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         setLastSyncTime(timeStr);
@@ -772,6 +916,80 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
     }
   };
 
+  // Khusus Posting Artikel ke Hosting (Cepat, Ringan & Aman)
+  const pushArticlesToHosting = async (): Promise<boolean> => {
+    const targetUrl = syncApiUrl.trim();
+    if (!targetUrl) {
+      showToast('URL Hosting Belum Diatur', 'Harap hubungkan URL Endpoint API Hosting di pengaturan atau hubungi Admin Pusat.', 'error');
+      return false;
+    }
+
+    setIsSyncing(true);
+    setSyncStatus('syncing');
+    setSyncErrorMessage(null);
+
+    try {
+      const payload = {
+        type: 'articles',
+        articles: articles,
+        syncedAt: new Date().toISOString()
+      };
+
+      const res = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
+      }
+
+      const resData = await res.json().catch(() => ({}));
+      if (resData.status === 'error') {
+        throw new Error(resData.message || 'Gagal memposting artikel');
+      }
+
+      const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastSyncTime(timeStr);
+      localStorage.setItem('mhq_last_sync_time', timeStr);
+      setSyncStatus('success');
+      setIsSyncing(false);
+
+      showToast(
+        'Artikel Berhasil Diposting!',
+        `Seluruh artikel (${articles.length} artikel) telah berhasil diunggah ke server hosting (${timeStr} WIB).`,
+        'success'
+      );
+      return true;
+    } catch (err: any) {
+      console.warn('Gagal memposting artikel ke hosting:', err);
+      // Fallback: mencoba sync full snapshot jika endpoint khusus tidak didukung
+      const fallbackSuccess = await pushToHosting(targetUrl, true);
+      if (fallbackSuccess) {
+        const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        showToast(
+          'Artikel Berhasil Diposting!',
+          `Artikel berhasil disimpan ke hosting melalui snapshot sinkronisasi (${timeStr} WIB).`,
+          'success'
+        );
+        return true;
+      }
+      setSyncStatus('error');
+      setSyncErrorMessage(err.message || 'Gagal memposting artikel ke hosting');
+      setIsSyncing(false);
+      showToast(
+        'Gagal Posting Artikel',
+        `Tidak dapat memposting artikel ke hosting: ${err.message || 'Periksa koneksi internet atau permission file sync.php di cPanel.'}`,
+        'error'
+      );
+      return false;
+    }
+  };
+
   // Auto-Pull data pertama kali saat aplikasi dimuat jika URL hosting sudah disetel
   useEffect(() => {
     if (syncApiUrl && syncApiUrl.startsWith('http')) {
@@ -791,7 +1009,11 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
   };
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    const sanitized = { ...newSettings };
+    if ('logoUrl' in sanitized && (!sanitized.logoUrl || sanitized.logoUrl.trim() === '')) {
+      sanitized.logoUrl = undefined;
+    }
+    setSettings(prev => ({ ...prev, ...sanitized }));
     showToast('Pengaturan Diperbarui', 'Data identitas pesantren telah tersimpan.');
   };
 
@@ -1167,19 +1389,86 @@ Wassalamu'alaikum Wr. Wb.`;
     );
   };
 
+  // Biaya Pendidikan & Beasiswa Actions
+  const updateFeeItem = (id: string, updated: Partial<EducationFeeItem>) => {
+    setFeeItems(prev => prev.map(item => item.id === id ? { ...item, ...updated } : item));
+    showToast('Biaya Diperbarui', 'Rincian biaya pendidikan berhasil diperbarui.');
+  };
+
+  const addFeeItem = (item: Omit<EducationFeeItem, 'id'>): EducationFeeItem => {
+    const newItem: EducationFeeItem = {
+      ...item,
+      id: `fee-${Date.now()}`
+    };
+    setFeeItems(prev => [...prev, newItem]);
+    showToast('Komponen Biaya Ditambahkan', 'Item biaya baru berhasil ditambahkan.');
+    return newItem;
+  };
+
+  const deleteFeeItem = (id: string) => {
+    setFeeItems(prev => prev.filter(item => item.id !== id));
+    showToast('Komponen Biaya Dihapus', 'Item biaya berhasil dihapus.', 'info');
+  };
+
+  const updateScholarshipInfo = (updated: Partial<ScholarshipInfo>) => {
+    setScholarshipInfo(prev => ({ ...prev, ...updated }));
+    showToast('Informasi Beasiswa Diperbarui', 'Data program beasiswa berhasil disimpan.');
+  };
+
+  // Author Management Actions
+  const addAuthorAccount = (account: Omit<AuthorAccount, 'id' | 'createdAt'>): AuthorAccount => {
+    const newAuthor: AuthorAccount = {
+      ...account,
+      id: `author-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setAuthorAccounts(prev => [...prev, newAuthor]);
+    showToast('Akun Penulis Dibuat', `Akun penulis ${newAuthor.name} (@${newAuthor.username}) berhasil dibuat.`);
+    return newAuthor;
+  };
+
+  const updateAuthorAccount = (id: string, updated: Partial<AuthorAccount>) => {
+    setAuthorAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, ...updated } : acc));
+    showToast('Akun Penulis Diperbarui', 'Data akun penulis berhasil diperbarui.');
+  };
+
+  const deleteAuthorAccount = (id: string) => {
+    setAuthorAccounts(prev => prev.filter(acc => acc.id !== id));
+    showToast('Akun Penulis Dihapus', 'Akun penulis berhasil dihapus.', 'info');
+  };
+
   const loginAdmin = (userInput: string, passInput: string): boolean => {
     const validUsername = settings.adminUsername || 'admin';
     const validPassword = settings.adminPassword || 'admin123';
 
-    // Strictly authenticate against the user-configured admin credentials
-    const isUserMatch = userInput.trim() === validUsername.trim();
-    const isPassMatch = passInput === validPassword;
-
-    if (isUserMatch && isPassMatch) {
+    // 1. Cek kredensial Admin Pusat
+    const isCentralAdmin = userInput.trim() === validUsername.trim() && passInput === validPassword;
+    if (isCentralAdmin) {
       setIsAdminLoggedIn(true);
-      showToast('Login Berhasil', 'Selamat datang di Panel Admin Markaz Hidayah Qur\'an.');
+      setCurrentUserRole('admin');
+      setLoggedInAuthor(null);
+      localStorage.setItem(STORAGE_KEYS.AUTH, 'true');
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'admin');
+      localStorage.removeItem(STORAGE_KEYS.LOGGED_AUTHOR);
+      showToast('Login Berhasil', 'Selamat datang di Panel Admin Utama Markaz Hidayah Qur\'an.');
       return true;
     }
+
+    // 2. Cek kredensial Akun Penulis / Redaksi
+    const matchedAuthor = authorAccounts.find(
+      acc => acc.isActive && acc.username.trim().toLowerCase() === userInput.trim().toLowerCase() && acc.password === passInput
+    );
+    if (matchedAuthor) {
+      setIsAdminLoggedIn(true);
+      setCurrentUserRole('author');
+      setLoggedInAuthor(matchedAuthor);
+      localStorage.setItem(STORAGE_KEYS.AUTH, 'true');
+      localStorage.setItem(STORAGE_KEYS.USER_ROLE, 'author');
+      localStorage.setItem(STORAGE_KEYS.LOGGED_AUTHOR, JSON.stringify(matchedAuthor));
+      showToast('Login Berhasil', `Selamat datang, ${matchedAuthor.name}! Anda berada di Panel Penulis & Redaksi.`);
+      return true;
+    }
+
     showToast('Login Gagal', 'Username atau password yang Anda masukkan tidak sesuai.', 'error');
     return false;
   };
@@ -1210,7 +1499,12 @@ Wassalamu'alaikum Wr. Wb.`;
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
-    showToast('Logout Berhasil', 'Anda telah keluar dari sesi administrator.', 'info');
+    setCurrentUserRole(null);
+    setLoggedInAuthor(null);
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+    localStorage.removeItem(STORAGE_KEYS.USER_ROLE);
+    localStorage.removeItem(STORAGE_KEYS.LOGGED_AUTHOR);
+    showToast('Logout Berhasil', 'Anda telah keluar dari sesi.', 'info');
     setCurrentRoute('home');
   };
 
@@ -1268,6 +1562,18 @@ Wassalamu'alaikum Wr. Wb.`;
         addBankAccount,
         updateBankAccount,
         deleteBankAccount,
+        feeItems,
+        scholarshipInfo,
+        updateFeeItem,
+        addFeeItem,
+        deleteFeeItem,
+        updateScholarshipInfo,
+        authorAccounts,
+        currentUserRole,
+        loggedInAuthor,
+        addAuthorAccount,
+        updateAuthorAccount,
+        deleteAuthorAccount,
         articles,
         gallery,
         registrations,
@@ -1303,6 +1609,7 @@ Wassalamu'alaikum Wr. Wb.`;
         syncErrorMessage,
         pullFromHosting,
         pushToHosting,
+        pushArticlesToHosting,
         testHostingConnection,
         downloadSyncPhpScript
       }}

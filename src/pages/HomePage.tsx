@@ -21,7 +21,8 @@ import { motion } from 'motion/react';
 export const HomePage: React.FC = () => {
   const { setCurrentRoute, programs, facilities, articles, gallery, openLightbox, navigateToArticle, settings, homeContent } = usePesantren();
 
-  const recentArticles = articles.filter(a => a.status === 'Published').slice(0, 3);
+  // Tampilkan seluruh artikel publikasi tanpa dibatasi jumlahnya
+  const displayedArticles = articles.filter(a => !a.status || a.status.toLowerCase() === 'published');
   const previewGallery = gallery.slice(0, 6);
 
   return (
@@ -111,7 +112,7 @@ export const HomePage: React.FC = () => {
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 group">
                 <img
-                  src={homeContent.hero.imageUrl}
+                  src={homeContent.hero.imageUrl || null}
                   alt="Aktivitas Tahfidz Markaz Hidayah Qur'an"
                   className="w-full h-[420px] object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
                   referrerPolicy="no-referrer"
@@ -162,7 +163,7 @@ export const HomePage: React.FC = () => {
               </button>
             </div>
 
-            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-5 rounded-2xl bg-teal-50/60 border border-teal-100 space-y-2">
                 <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-sm">
                   1
@@ -183,13 +184,25 @@ export const HomePage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center font-bold text-sm">
+              <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
                   3
                 </div>
                 <h3 className="font-bold text-sm text-slate-900">{homeContent.about.card3Title}</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   {homeContent.about.card3Desc}
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-2">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                  4
+                </div>
+                <h3 className="font-bold text-sm text-slate-900">
+                  {homeContent.about.card4Title || "Karakter & Kemandirian Santri"}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {homeContent.about.card4Desc || "Pendidikan kepemimpinan, kedisiplinan hidup mandiri, serta pembentukan adab thalabul ilmi dan khidmah dakwah."}
                 </p>
               </div>
             </div>
@@ -228,7 +241,7 @@ export const HomePage: React.FC = () => {
             >
               <div className="h-44 overflow-hidden relative bg-slate-100">
                 <img
-                  src={program.imageUrl}
+                  src={program.imageUrl || null}
                   alt={program.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
@@ -297,7 +310,7 @@ export const HomePage: React.FC = () => {
               >
                 <div className="h-48 overflow-hidden bg-slate-100 relative">
                   <img
-                    src={fac.imageUrl}
+                    src={fac.imageUrl || null}
                     alt={fac.name}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"
@@ -407,7 +420,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {recentArticles.map((art) => (
+          {displayedArticles.map((art) => (
             <article
               key={art.id}
               onClick={() => navigateToArticle(art.slug)}
@@ -415,7 +428,7 @@ export const HomePage: React.FC = () => {
             >
               <div className="h-48 overflow-hidden relative bg-slate-100">
                 <img
-                  src={art.thumbnail}
+                  src={art.thumbnail || null}
                   alt={art.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
@@ -484,7 +497,7 @@ export const HomePage: React.FC = () => {
               className="cursor-pointer group relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-200 shadow-2xs hover:shadow-md transition-all"
             >
               <img
-                src={item.imageUrl}
+                src={item.imageUrl || null}
                 alt={item.title}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 referrerPolicy="no-referrer"

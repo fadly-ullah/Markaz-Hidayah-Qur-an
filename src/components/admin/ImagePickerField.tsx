@@ -124,7 +124,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
       {/* Main Preview & Action Box */}
       <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
         {/* Preview Container */}
-        {value ? (
+        {value && value.trim() !== '' ? (
           <div className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
             <div
               className={`w-full overflow-hidden bg-slate-900/5 ${
@@ -134,7 +134,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
               }`}
             >
               <img
-                src={value}
+                src={value.trim() || null}
                 alt={label}
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -340,7 +340,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
                       >
                         <div className="aspect-video relative overflow-hidden bg-slate-100">
                           <img
-                            src={item.imageUrl}
+                            src={item.imageUrl || null}
                             alt={item.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             referrerPolicy="no-referrer"
@@ -391,7 +391,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
       )}
 
       {/* FULL PREVIEW MODAL */}
-      {isPreviewOpen && value && (
+      {isPreviewOpen && value && value.trim() !== '' && (
         <div
           onClick={() => setIsPreviewOpen(false)}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs cursor-pointer"
@@ -404,7 +404,7 @@ export const ImagePickerField: React.FC<ImagePickerFieldProps> = ({
               <X className="w-5 h-5" />
             </button>
             <img
-              src={value}
+              src={value.trim() || null}
               alt={label}
               className="max-h-[85vh] w-auto object-contain rounded-2xl"
             />

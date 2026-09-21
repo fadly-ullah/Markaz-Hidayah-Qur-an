@@ -169,6 +169,8 @@ export interface HomeAboutPreview {
   card2Desc: string;
   card3Title: string;
   card3Desc: string;
+  card4Title?: string;
+  card4Desc?: string;
 }
 
 export interface HomeCtaPsb {
@@ -301,3 +303,34 @@ export interface DonationPageContent {
   accountabilityTitle: string;
   accountabilityDesc: string;
 }
+
+export interface EducationFeeItem {
+  id: string;
+  name: string;
+  amount: string;
+  description: string;
+  category: string;
+}
+
+export interface ScholarshipInfo {
+  title: string;
+  badge: string;
+  description: string;
+  requirements: string;
+  partnerInfo?: string;
+  isActive: boolean;
+}
+
+export interface AuthorAccount {
+  id: string;
+  username: string;
+  password: string;
+  name: string;
+  email?: string;
+  role: 'author';
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export type UserRole = 'admin' | 'author';
+

@@ -21,9 +21,9 @@ export const Footer: React.FC = () => {
           {/* Col 1 & 2: Branding & About */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              {settings.logoUrl ? (
+              {settings.logoUrl && settings.logoUrl.trim() !== '' ? (
                 <img
-                  src={settings.logoUrl}
+                  src={settings.logoUrl.trim() || null}
                   alt={settings.pesantrenName}
                   className="w-11 h-11 rounded-xl object-cover border border-teal-500/40 shadow-md bg-white/10"
                   onError={(e) => {

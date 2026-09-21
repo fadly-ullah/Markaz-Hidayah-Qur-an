@@ -78,7 +78,7 @@ export const GalleryLightbox: React.FC = () => {
           {/* Image Canvas */}
           <div className="relative flex-1 bg-black/50 flex items-center justify-center min-h-[300px] max-h-[65vh] overflow-hidden">
             <img
-              src={currentItem.imageUrl}
+              src={currentItem.imageUrl || null}
               alt={currentItem.title}
               className="max-w-full max-h-[65vh] object-contain select-none"
               referrerPolicy="no-referrer"

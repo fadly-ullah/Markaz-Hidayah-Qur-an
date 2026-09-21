@@ -42,7 +42,9 @@ import {
   Home,
   Compass,
   Building2,
-  Cloud
+  Cloud,
+  GraduationCap,
+  UserCheck
 } from 'lucide-react';
 import { SeoPreviewModal } from '../components/SeoPreviewModal';
 import { AdminEditBeranda } from '../components/admin/AdminEditBeranda';
@@ -50,6 +52,9 @@ import { AdminEditProfil } from '../components/admin/AdminEditProfil';
 import { AdminEditProgram } from '../components/admin/AdminEditProgram';
 import { AdminEditFasilitas } from '../components/admin/AdminEditFasilitas';
 import { AdminEditDonasi } from '../components/admin/AdminEditDonasi';
+import { AdminEditBiaya } from '../components/admin/AdminEditBiaya';
+import { AdminManageAuthors } from '../components/admin/AdminManageAuthors';
+import { AuthorPanel } from '../components/admin/AuthorPanel';
 import { AdminCloudSync } from '../components/admin/AdminCloudSync';
 import { AdminRegistrations } from '../components/admin/AdminRegistrations';
 import { ImagePickerField } from '../components/admin/ImagePickerField';
@@ -57,6 +62,10 @@ import { ImagePickerField } from '../components/admin/ImagePickerField';
 export const AdminPage: React.FC = () => {
   const {
     isAdminLoggedIn,
+    currentUserRole,
+    loggedInAuthor,
+    authorAccounts,
+    feeItems,
     loginAdmin,
     logoutAdmin,
     registrations,
@@ -76,7 +85,8 @@ export const AdminPage: React.FC = () => {
     syncApiUrl,
     isSyncing,
     lastSyncTime,
-    pushToHosting
+    pushToHosting,
+    pushArticlesToHosting
   } = usePesantren();
 
   // Login form state
@@ -86,7 +96,7 @@ export const AdminPage: React.FC = () => {
 
   // Active Admin Sub-tab
   const [adminTab, setAdminTab] = useState<
-    'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'edit-donasi' | 'santri' | 'articles' | 'gallery' | 'settings' | 'cloud-sync'
+    'dashboard' | 'edit-beranda' | 'edit-profil' | 'edit-program' | 'edit-fasilitas' | 'edit-biaya' | 'edit-donasi' | 'santri' | 'articles' | 'gallery' | 'manage-authors' | 'settings' | 'cloud-sync'
   >('dashboard');
 
   // Article Modal State
@@ -363,10 +373,16 @@ export const AdminPage: React.FC = () => {
               className="w-full py-3 bg-teal-700 hover:bg-teal-800 text-white rounded-xl font-bold text-xs shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2"
             >
               <Lock className="w-4 h-4" />
-              <span>Masuk ke Dashboard Admin</span>
+              <span>Masuk ke Panel Pengelola</span>
             </button>
 
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 space-y-1">
+              <div className="font-semibold text-slate-700">Petunjuk Login:</div>
+              <div>• <strong>Admin Pusat:</strong> Akses penuh seluruh sistem, santri, beasiswa & hosting.</div>
+              <div>• <strong>Penulis Artikel:</strong> Masuk dengan akun buatan admin khusus artikel & posting.</div>
+            </div>
+
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-1 border-t border-slate-100">
               <Shield className="w-3.5 h-3.5 text-slate-400" />
               <span>Akses aman terenkripsi • Hanya staf & administrator resmi</span>
             </div>
@@ -376,7 +392,12 @@ export const AdminPage: React.FC = () => {
     );
   }
 
-  // Logged In Admin Dashboard
+  // Panel Khusus Penulis / Redaksi Artikel (Dedicated Author Panel)
+  if (currentUserRole === 'author') {
+    return <AuthorPanel />;
+  }
+
+  // Logged In Central Admin Dashboard
   return (
     <div className="space-y-8 pb-24">
       {/* Top Admin Bar */}
@@ -491,6 +512,18 @@ export const AdminPage: React.FC = () => {
           </button>
 
           <button
+            onClick={() => setAdminTab('edit-biaya')}
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              adminTab === 'edit-biaya'
+                ? 'bg-teal-700 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span>Biaya & Beasiswa</span>
+          </button>
+
+          <button
             onClick={() => setAdminTab('edit-donasi')}
             className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               adminTab === 'edit-donasi'
@@ -524,6 +557,18 @@ export const AdminPage: React.FC = () => {
           >
             <FileText className="w-4 h-4" />
             <span>Artikel ({articles.length})</span>
+          </button>
+
+          <button
+            onClick={() => setAdminTab('manage-authors')}
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              adminTab === 'manage-authors'
+                ? 'bg-teal-700 text-white shadow-sm'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>Akun Penulis ({authorAccounts.length})</span>
           </button>
 
           <button
@@ -722,11 +767,25 @@ export const AdminPage: React.FC = () => {
                       <span>Edit Fasilitas Pesantren</span>
                     </button>
                     <button
+                      onClick={() => setAdminTab('edit-biaya')}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 hover:bg-white/25 transition-colors cursor-pointer"
+                    >
+                      <GraduationCap className="w-4 h-4 text-teal-200" />
+                      <span>Edit Rincian Biaya & Beasiswa</span>
+                    </button>
+                    <button
                       onClick={openNewArticleForm}
                       className="w-full py-2.5 px-3 rounded-xl bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 hover:bg-white/25 transition-colors cursor-pointer"
                     >
                       <Plus className="w-4 h-4 text-teal-200" />
                       <span>Buat Artikel Baru (SEO Ready)</span>
+                    </button>
+                    <button
+                      onClick={() => setAdminTab('manage-authors')}
+                      className="w-full py-2.5 px-3 rounded-xl bg-white/15 text-white font-bold text-xs flex items-center justify-center gap-2 hover:bg-white/25 transition-colors cursor-pointer"
+                    >
+                      <UserCheck className="w-4 h-4 text-teal-200" />
+                      <span>Kelola Akun Penulis Artikel ({authorAccounts.length})</span>
                     </button>
                     <button
                       onClick={() => {
@@ -771,10 +830,13 @@ export const AdminPage: React.FC = () => {
         {/* 5. EDIT FASILITAS PESANTREN */}
         {adminTab === 'edit-fasilitas' && <AdminEditFasilitas />}
 
-        {/* 6. EDIT PANEL DONASI & REKENING RESMI YAYASAN */}
+        {/* 6. EDIT RINCIAN BIAYA PENDIDIKAN & PROGRAM BEASISWA */}
+        {adminTab === 'edit-biaya' && <AdminEditBiaya />}
+
+        {/* 7. EDIT PANEL DONASI & REKENING RESMI YAYASAN */}
         {adminTab === 'edit-donasi' && <AdminEditDonasi />}
 
-        {/* 7. DATA PENDAFTAR SANTRI BARU (DENGAN AKSES UBAH, HAPUS, TAMBAH, NOTIF WA) */}
+        {/* 8. DATA PENDAFTAR SANTRI BARU (DENGAN AKSES UBAH, HAPUS, TAMBAH, NOTIF WA) */}
         {adminTab === 'santri' && <AdminRegistrations />}
 
         {/* 3. MANAJEMEN ARTIKEL & SEO (User requirement: "artikelnya juga dapat ditambahkan oleh admin dan artikel ini nantinya akan mendukung SEO website ini") */}
@@ -817,7 +879,7 @@ export const AdminPage: React.FC = () => {
                     <tr key={art.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="p-3 w-16">
                         <img
-                          src={art.thumbnail}
+                          src={art.thumbnail || null}
                           alt={art.title}
                           className="w-12 h-10 object-cover rounded-lg bg-slate-100"
                           referrerPolicy="no-referrer"
@@ -908,7 +970,7 @@ export const AdminPage: React.FC = () => {
                 >
                   <div className="h-40 overflow-hidden relative bg-slate-200">
                     <img
-                      src={item.imageUrl}
+                      src={item.imageUrl || null}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       referrerPolicy="no-referrer"
@@ -944,6 +1006,9 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* MANAJEMEN AKUN PENULIS & REDAKSI ARTIKEL */}
+        {adminTab === 'manage-authors' && <AdminManageAuthors />}
 
         {/* 5. PENGATURAN IDENTITAS, HEADER, FOOTER, SISTEM & KREDENSIAL ADMIN */}
         {adminTab === 'settings' && (
@@ -1071,9 +1136,9 @@ export const AdminPage: React.FC = () => {
                     <div className="mt-3 p-3 bg-white rounded-xl border border-slate-200 flex items-center gap-3">
                       <span className="text-[11px] font-bold text-slate-400">Live Preview:</span>
                       <div className="flex items-center gap-2.5">
-                        {editLogoUrl ? (
+                        {editLogoUrl && editLogoUrl.trim() !== '' ? (
                           <img
-                            src={editLogoUrl}
+                            src={editLogoUrl.trim() || null}
                             alt="Logo Preview"
                             className="w-9 h-9 rounded-lg object-cover border border-teal-200 shadow-2xs"
                             onError={(e) => {

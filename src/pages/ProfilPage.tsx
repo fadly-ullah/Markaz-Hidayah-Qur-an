@@ -85,7 +85,7 @@ export const ProfilPage: React.FC = () => {
           <div className="lg:col-span-5">
             <div className="rounded-3xl overflow-hidden shadow-lg border border-slate-200">
               <img
-                src={profilContent.historyImageUrl}
+                src={profilContent.historyImageUrl || null}
                 alt="Lingkungan Pesantren Cisarua"
                 className="w-full h-80 object-cover"
                 referrerPolicy="no-referrer"
@@ -190,7 +190,7 @@ export const ProfilPage: React.FC = () => {
               >
                 <div className="h-64 overflow-hidden bg-slate-100">
                   <img
-                    src={ust.photo}
+                    src={ust.photo || null}
                     alt={ust.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

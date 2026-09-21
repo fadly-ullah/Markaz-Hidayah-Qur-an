@@ -123,7 +123,7 @@ export const AdminEditFasilitas: React.FC = () => {
             <div>
               <div className="h-48 bg-slate-100 relative overflow-hidden">
                 <img
-                  src={fac.imageUrl}
+                  src={fac.imageUrl || null}
                   alt={fac.name}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"

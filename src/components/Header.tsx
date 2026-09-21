@@ -103,9 +103,9 @@ export const Header: React.FC = () => {
             onClick={() => handleNavigate('home')}
             className="flex items-center gap-3 cursor-pointer group select-none py-1"
           >
-            {settings.logoUrl && !logoImgError ? (
+            {settings.logoUrl && settings.logoUrl.trim() !== '' && !logoImgError ? (
               <img
-                src={settings.logoUrl}
+                src={settings.logoUrl.trim() || null}
                 alt={settings.pesantrenName}
                 onError={() => setLogoImgError(true)}
                 className="w-11 h-11 rounded-xl object-cover border border-teal-200/80 shadow-xs group-hover:scale-105 transition-transform"

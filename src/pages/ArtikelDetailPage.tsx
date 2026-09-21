@@ -119,7 +119,7 @@ export const ArtikelDetailPage: React.FC = () => {
         {/* Featured Image */}
         <div className="rounded-3xl overflow-hidden shadow-md bg-slate-100 border border-slate-200">
           <img
-            src={article.thumbnail}
+            src={article.thumbnail || null}
             alt={article.title}
             className="w-full max-h-[460px] object-cover"
             referrerPolicy="no-referrer"
@@ -184,7 +184,7 @@ export const ArtikelDetailPage: React.FC = () => {
               >
                 <div className="h-36 overflow-hidden bg-slate-100">
                   <img
-                    src={rel.thumbnail}
+                    src={rel.thumbnail || null}
                     alt={rel.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"

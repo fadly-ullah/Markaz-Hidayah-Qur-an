@@ -76,7 +76,7 @@ export const ProgramPage: React.FC = () => {
               >
                 <div className="lg:col-span-5 h-64 lg:h-auto overflow-hidden relative bg-slate-100">
                   <img
-                    src={program.imageUrl}
+                    src={program.imageUrl || null}
                     alt={program.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

@@ -279,7 +279,7 @@ export const AdminEditProgram: React.FC = () => {
               >
                 <div className="w-full md:w-48 h-32 rounded-xl overflow-hidden bg-slate-200 shrink-0">
                   <img
-                    src={prog.imageUrl}
+                    src={prog.imageUrl || null}
                     alt={prog.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

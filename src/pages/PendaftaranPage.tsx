@@ -24,7 +24,9 @@ export const PendaftaranPage: React.FC = () => {
     settings,
     registerNewSantri,
     registrations,
-    sendWhatsAppNotification
+    sendWhatsAppNotification,
+    feeItems,
+    scholarshipInfo
   } = usePesantren();
 
   const [activeTab, setActiveTab] = useState<'form' | 'info' | 'biaya' | 'status'>('form');
@@ -657,50 +659,58 @@ export const PendaftaranPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-2xl bg-teal-50/50 border border-teal-200 space-y-3">
-                  <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Infaq Formulir & Seleksi
-                  </span>
-                  <div className="text-2xl font-black text-slate-900">Rp 250.000</div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Dibayarkan satu kali saat pendaftaran untuk biaya tes talaqqi, wawancara, dan sertifikat hasil seleksi.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-teal-50/50 border border-teal-200 space-y-3">
-                  <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Uang Pangkal / Sarana
-                  </span>
-                  <div className="text-2xl font-black text-slate-900">Rp 8.500.000</div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Termasuk kasur asrama, lemari pribadi, 4 stel seragam, kitab kurikulum, dan wakaf pengembangan sarana.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-sky-50/50 border border-sky-200 space-y-3">
-                  <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">
-                    SPP Bulanan (All-in)
-                  </span>
-                  <div className="text-2xl font-black text-slate-900">Rp 1.450.000 / bln</div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Sudah mencakup makan bergizi 3x sehari, laundry asrama, bimbingan halaqah 24 jam, dan klinik kesehatan.
-                  </p>
-                </div>
+                {feeItems.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className={`p-6 rounded-2xl border space-y-3 ${
+                      idx % 2 === 0 ? 'bg-teal-50/50 border-teal-200' : 'bg-sky-50/50 border-sky-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-teal-700">
+                        {item.name}
+                      </span>
+                      {item.category && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500 font-medium">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-2xl font-black text-slate-900">{item.amount}</div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
               </div>
 
               {/* Beasiswa Section */}
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-teal-800 to-sky-800 text-white space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-300" />
-                  <h4 className="font-bold text-base">Program Beasiswa Yatim & Dhuafa Berprestasi</h4>
+              {scholarshipInfo.isActive && (
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-teal-800 to-sky-800 text-white space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-300 shrink-0" />
+                    <h4 className="font-bold text-base">{scholarshipInfo.title}</h4>
+                    {scholarshipInfo.badge && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-semibold border border-amber-300/30">
+                        {scholarshipInfo.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs sm:text-sm text-teal-100 leading-relaxed">
+                    {scholarshipInfo.description}
+                  </p>
+                  {scholarshipInfo.requirements && (
+                    <div className="text-xs font-semibold text-teal-200">
+                      {scholarshipInfo.requirements}
+                    </div>
+                  )}
+                  {scholarshipInfo.partnerInfo && (
+                    <div className="text-[11px] text-teal-300/80 pt-1 border-t border-teal-700/50">
+                      {scholarshipInfo.partnerInfo}
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs sm:text-sm text-teal-100 leading-relaxed">
-                  Markaz Hidayah Qur'an menyediakan beasiswa bebas uang pangkal dan subsidi SPP 100% bagi santri penghafal Al-Qur'an minimal 5 juz berstatus yatim atau keluarga pra-sejahtera, didukung oleh donatur via kemitraan <strong>mariberbagi.net</strong>.
-                </p>
-                <div className="text-xs font-semibold text-teal-200">
-                  Untuk mengajukan jalur beasiswa, lampirkan SKTM (Surat Keterangan Tidak Mampu) dan sertifikat hafalan saat tes seleksi.
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}

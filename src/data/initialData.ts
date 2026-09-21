@@ -13,14 +13,16 @@ import {
   DailyScheduleItem,
   TargetTimelineItem,
   DonationProgram,
-  DonationPageContent
+  DonationPageContent,
+  EducationFeeItem,
+  ScholarshipInfo,
+  AuthorAccount
 } from '../types';
 
 export const INITIAL_SETTINGS: SiteSettings = {
   pesantrenName: "Markaz Hidayah Qur'an",
   subtitle: "Pesantren Tahfidz & Keislaman Modern",
   tagline: "Mencetak Generasi Qur'ani yang Mandiri, Berilmu, dan Berakhlakul Karimah",
-  logoUrl: "",
   phone: "+62 251 8329 101",
   waNumber: "6281234567890",
   email: "info@markazhidayah.sch.id",
@@ -521,15 +523,17 @@ export const INITIAL_HOME_CONTENT: HomeContent = {
     stat4Label: "Akreditasi Formal"
   },
   about: {
-    badgeText: "Tentang Pesantren",
+    badgeText: "Kurikulum & Keunggulan",
     title: "Membangun Peradaban dari Kalamullah",
-    description: "Markaz Hidayah Qur'an didirikan sebagai ikhtiar menyatukan kemurnian tradisi pesantren tahfidz salaf dengan manajemen tata kelola pendidikan modern yang profesional.",
-    card1Title: "Tahfidz Bersanad",
+    description: "Markaz Hidayah Qur'an memadukan kemurnian tradisi pesantren tahfidz salaf dengan tata kelola kurikulum modern berstandar tinggi.",
+    card1Title: "Tahfidz 30 Juz Bersanad",
     card1Desc: "Bimbingan intensif talaqqi Al-Jazari bersama asatidz yang memiliki sanad muttashil sampai ke Rasulullah ﷺ.",
-    card2Title: "Penguasaan Bahasa & Turats",
-    card2Desc: "Santri dibekali kecakapan Bahasa Arab aktif dan pengkajian kitab kuning dasar sebagai pemahaman hukum syar'i.",
-    card3Title: "Kemandirian & Adab",
-    card3Desc: "Pendidikan kepemimpinan, kedisiplinan hidup mandiri, serta pembentukan adab sopan santun kepada orang tua & guru."
+    card2Title: "Dirasah Islamiyah & Turats",
+    card2Desc: "Penguasaan dasar ilmu syar'i, aqidah ahlussunnah, fiqih ibadah, dan pengkajian kitab kuning salafus shalih.",
+    card3Title: "Bahasa Arab & Asing Aktif",
+    card3Desc: "Pembiasaan percakapan harian (muhadatsah), penguasaan nahwu-shorof aplikatif, dan literasi kebahasaan.",
+    card4Title: "Karakter & Kemandirian Santri",
+    card4Desc: "Pendidikan kepemimpinan, kedisiplinan hidup mandiri, serta pembentukan adab thalabul ilmi dan khidmah dakwah."
   },
   ctaPsb: {
     badgeText: "Penerimaan Santri Baru TA 2026/2027",
@@ -658,7 +662,8 @@ export const INITIAL_DAILY_SCHEDULE: DailyScheduleItem[] = [
 export const INITIAL_TARGET_TIMELINE: TargetTimelineItem[] = [
   { id: "tgt-1", year: "Tahun ke-1", juz: "Juz 1 – 10", focus: "Tahsin Al-Jazari, Tajwid Praktis, Itqon Juz 30-28, Setoran 10 Juz pertama" },
   { id: "tgt-2", year: "Tahun ke-2", juz: "Juz 11 – 20", focus: "Akselerasi Sabaq, Muroja'ah Manzil harian, Bahasa Arab Muhadatsah" },
-  { id: "tgt-3", year: "Tahun ke-3", juz: "Juz 21 – 30", focus: "Khatam 30 Juz, Karantina Tasmi' sekali duduk 30 Juz, Pengambilan Sanad" }
+  { id: "tgt-3", year: "Tahun ke-3", juz: "Juz 21 – 30", focus: "Khatam 30 Juz, Karantina Tasmi' sekali duduk 30 Juz, Pengambilan Sanad" },
+  { id: "tgt-4", year: "Tahun ke-4 (Takhassus & Pengabdian)", juz: "Sanad & Khidmah", focus: "Pengambilan Ijazah Sanad Qira'at Mutashil, Bahtsul Masail Turats, dan Pengabdian Dakwah Masyarakat" }
 ];
 
 export const INITIAL_DONATION_PROGRAMS: DonationProgram[] = [
@@ -721,3 +726,49 @@ export const INITIAL_DONATION_CONTENT: DonationPageContent = {
   accountabilityTitle: 'Akuntabilitas & Jaminan Amanah',
   accountabilityDesc: 'Yayasan Markaz Hidayah Qur\'an memegang teguh prinsip tata kelola amanah (Good Islamic Governance). Seluruh penerimaan dana wakaf dan infaq dilaporkan secara berkala melalui laman Artikel & Publikasi di website ini serta dapat diaudit oleh lembaga pengawas wakaf independen.'
 };
+
+export const INITIAL_FEE_ITEMS: EducationFeeItem[] = [
+  {
+    id: "fee-1",
+    name: "Infaq Formulir & Seleksi",
+    amount: "Rp 250.000",
+    description: "Dibayarkan satu kali saat pendaftaran untuk biaya tes talaqqi, wawancara, dan sertifikat hasil seleksi.",
+    category: "Pendaftaran"
+  },
+  {
+    id: "fee-2",
+    name: "Uang Pangkal / Sarana",
+    amount: "Rp 8.500.000",
+    description: "Termasuk kasur asrama, lemari pribadi, 4 stel seragam, kitab kurikulum, dan wakaf pengembangan sarana.",
+    category: "Uang Pangkal"
+  },
+  {
+    id: "fee-3",
+    name: "SPP Bulanan (All-in)",
+    amount: "Rp 1.450.000 / bln",
+    description: "Sudah mencakup makan bergizi 3x sehari, laundry asrama, bimbingan halaqah 24 jam, dan klinik kesehatan.",
+    category: "SPP Bulanan"
+  }
+];
+
+export const INITIAL_SCHOLARSHIP_INFO: ScholarshipInfo = {
+  title: "Program Beasiswa Yatim & Dhuafa Berprestasi",
+  badge: "Jalur Beasiswa Tahfidz",
+  description: "Markaz Hidayah Qur'an menyediakan beasiswa bebas uang pangkal dan subsidi SPP 100% bagi santri penghafal Al-Qur'an minimal 5 juz berstatus yatim atau keluarga pra-sejahtera, didukung oleh donatur via kemitraan mariberbagi.net.",
+  requirements: "Untuk mengajukan jalur beasiswa, lampirkan SKTM (Surat Keterangan Tidak Mampu) dan sertifikat hafalan saat tes seleksi.",
+  partnerInfo: "Didukung oleh Muhsinin & Donatur via platform resmi mariberbagi.net",
+  isActive: true
+};
+
+export const INITIAL_AUTHOR_ACCOUNTS: AuthorAccount[] = [
+  {
+    id: "author-1",
+    username: "redaksi",
+    password: "redaksi123",
+    name: "Tim Redaksi & Penulis MHQ",
+    role: "author",
+    isActive: true,
+    createdAt: "2026-09-21"
+  }
+];
+

@@ -21,7 +21,7 @@ export const ArtikelPage: React.FC = () => {
   ];
 
   const publishedArticles = useMemo(() => {
-    return articles.filter(a => a.status === 'Published');
+    return articles.filter(a => !a.status || a.status.toLowerCase() === 'published');
   }, [articles]);
 
   const filteredArticles = useMemo(() => {
@@ -110,7 +110,7 @@ export const ArtikelPage: React.FC = () => {
                 className="h-52 overflow-hidden relative bg-slate-100 cursor-pointer"
               >
                 <img
-                  src={article.thumbnail}
+                  src={article.thumbnail || null}
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"

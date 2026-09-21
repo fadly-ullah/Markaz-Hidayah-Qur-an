@@ -137,7 +137,7 @@ export const SeoPreviewModal: React.FC<Article | SeoPreviewModalProps> = (props)
               <div className="border border-slate-200 rounded-xl overflow-hidden max-w-md mx-auto shadow-sm bg-white">
                 <div className="h-44 bg-slate-100 overflow-hidden relative">
                   <img
-                    src={article.thumbnail}
+                    src={article.thumbnail || null}
                     alt={article.title}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"

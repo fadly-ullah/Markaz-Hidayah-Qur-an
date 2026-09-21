@@ -4,8 +4,12 @@
  * Lokasi Hosting: public_html/api/sync.php
  * 
  * Script ini bertindak sebagai database cloud terpusat dan backend storage
- * untuk menghubungkan MacBook, HP, dan pengunjung website secara real-time.
+ * untuk menghubungkan MacBook, HP, panel penulis artikel, dan pengunjung website secara real-time.
  */
+
+@ini_set('memory_limit', '256M');
+@ini_set('post_max_size', '64M');
+@ini_set('upload_max_filesize', '64M');
 
 // 1. Izinkan Cross-Origin Resource Sharing (CORS) dari Vercel / Domain Pesantren
 header("Access-Control-Allow-Origin: *");
@@ -34,26 +38,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     } else {
         echo json_encode([
             "status" => "empty",
-            "message" => "Database di hosting Rumahweb belum berisi data. Silakan klik tombol 'Kirim Data ke Hosting' di Panel Admin.",
+            "message" => "Database di hosting Rumahweb belum berisi data. Silakan klik tombol 'Posting ke Hosting' di Panel Admin atau Penulis.",
             "serverTime" => date('Y-m-d H:i:s')
         ]);
     }
     exit();
 }
 
-// 4. POST: Menyimpan Data Pesantren Terbaru dari Admin (MacBook / HP)
+// 4. POST: Menyimpan Data Pesantren Terbaru dari Admin / Penulis Artikel
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rawInput = file_get_contents('php://input');
     $decoded = json_decode($rawInput, true);
 
     if ($decoded && is_array($decoded)) {
-        // Simpan data lengkap ke file JSON
-        $saved = @file_put_contents($dataFile, json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        // Cek apakah update parsial khusus artikel (dari Panel Penulis Artikel)
+        if (isset($decoded['type']) && $decoded['type'] === 'articles' && isset($decoded['articles'])) {
+            $currentData = [];
+            if (file_exists($dataFile)) {
+                $existing = json_decode(file_get_contents($dataFile), true);
+                if (is_array($existing)) {
+                    $currentData = $existing;
+                }
+            }
+            $currentData['articles'] = $decoded['articles'];
+            $currentData['syncedAt'] = date('Y-m-d H:i:s');
+            $dataToSave = $currentData;
+        } else {
+            $dataToSave = $decoded;
+        }
+
+        // Simpan data ke file JSON
+        $saved = @file_put_contents($dataFile, json_encode($dataToSave, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         
         if ($saved !== false) {
             echo json_encode([
                 "status" => "success",
-                "message" => "Data pesantren berhasil disimpan di hosting Rumahweb.",
+                "message" => "Data pesantren dan artikel berhasil disimpan di hosting Rumahweb.",
                 "syncedAt" => date('Y-m-d H:i:s'),
                 "bytesWritten" => $saved
             ]);

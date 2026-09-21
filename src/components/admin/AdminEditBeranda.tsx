@@ -311,7 +311,7 @@ export const AdminEditBeranda: React.FC = () => {
           </div>
           <div>
             <h3 className="font-bold text-base text-slate-900">Bagian Sekilas Tentang Pesantren (Beranda)</h3>
-            <p className="text-xs text-slate-500">Pengantar profil singkat dan 3 pilar keunggulan utama</p>
+            <p className="text-xs text-slate-500">Pengantar profil singkat dan 4 pilar keunggulan kurikulum utama</p>
           </div>
         </div>
 
@@ -346,7 +346,7 @@ export const AdminEditBeranda: React.FC = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           {/* Pilar 1 */}
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
             <h5 className="text-xs font-bold text-teal-800">Pilar Keunggulan 1</h5>
@@ -411,6 +411,31 @@ export const AdminEditBeranda: React.FC = () => {
                 rows={3}
                 value={formData.about.card3Desc}
                 onChange={e => handleAboutChange('card3Desc', e.target.value)}
+                className="w-full text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg"
+              />
+            </div>
+          </div>
+
+          {/* Pilar 4 */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+            <h5 className="text-xs font-bold text-teal-800">Pilar Keunggulan 4</h5>
+            <div>
+              <label className="block text-[11px] text-slate-600 mb-0.5">Judul Kartu</label>
+              <input
+                type="text"
+                value={formData.about.card4Title || ''}
+                onChange={e => handleAboutChange('card4Title', e.target.value)}
+                placeholder="cth: Karakter & Kemandirian Santri"
+                className="w-full text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-semibold"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-slate-600 mb-0.5">Deskripsi</label>
+              <textarea
+                rows={3}
+                value={formData.about.card4Desc || ''}
+                onChange={e => handleAboutChange('card4Desc', e.target.value)}
+                placeholder="Pendidikan kepemimpinan, kedisiplinan hidup mandiri..."
                 className="w-full text-xs px-3 py-1.5 bg-white border border-slate-200 rounded-lg"
               />
             </div>
