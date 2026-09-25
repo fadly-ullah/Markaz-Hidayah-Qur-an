@@ -28,8 +28,8 @@ export const SeoPreviewModal: React.FC<Article | SeoPreviewModalProps> = (props)
   const [activeTab, setActiveTab] = useState<'google' | 'social' | 'schema'>('google');
   const [copied, setCopied] = useState(false);
 
-  const domain = 'https://markazhidayah.sch.id';
-  const articleUrl = `${domain}/artikel/${article.slug}`;
+  const domain = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'https://markazhidayah.sch.id';
+  const articleUrl = `${domain}/?article=${article.slug}`;
 
   const jsonLdSchema = {
     '@context': 'https://schema.org',

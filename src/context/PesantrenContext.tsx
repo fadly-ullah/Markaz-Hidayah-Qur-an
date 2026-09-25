@@ -226,9 +226,14 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Navigation State with URL Hash & Query parameter support
   const [currentRoute, setCurrentRouteState] = useState<NavigationRoute>(() => {
     try {
-      const hash = window.location.hash.replace('#', '').toLowerCase();
       const params = new URLSearchParams(window.location.search);
+      const articleParam = params.get('article') || params.get('slug');
+      const hash = window.location.hash.replace('#', '').toLowerCase();
       const page = params.get('page')?.toLowerCase() || params.get('route')?.toLowerCase();
+
+      if (articleParam || hash.startsWith('artikel-detail/') || hash.startsWith('artikel/')) {
+        return 'artikel-detail';
+      }
       const target = hash || page;
       if (target === 'admin' || target === 'penulis' || target === 'author') return 'admin';
       if (target === 'profil') return 'profil';
@@ -244,13 +249,50 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     return 'home';
   });
-  const [selectedArticleSlug, setSelectedArticleSlug] = useState<string | null>(null);
 
-  // Synchronize route with URL hash listener
+  const [selectedArticleSlug, setSelectedArticleSlug] = useState<string | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const articleParam = params.get('article') || params.get('slug');
+      if (articleParam) return articleParam;
+
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('artikel-detail/')) {
+        return hash.replace('artikel-detail/', '');
+      }
+      if (hash.startsWith('artikel/')) {
+        return hash.replace('artikel/', '');
+      }
+    } catch {
+      // fallback
+    }
+    return null;
+  });
+
+  // Synchronize route with URL hash and popstate listener
   useEffect(() => {
-    const handleHash = () => {
+    const handleUrlChange = () => {
       try {
+        const params = new URLSearchParams(window.location.search);
+        const articleParam = params.get('article') || params.get('slug');
+        if (articleParam) {
+          setSelectedArticleSlug(articleParam);
+          setCurrentRouteState('artikel-detail');
+          return;
+        }
+
         const hash = window.location.hash.replace('#', '').toLowerCase();
+        if (hash.startsWith('artikel-detail/')) {
+          setSelectedArticleSlug(hash.replace('artikel-detail/', ''));
+          setCurrentRouteState('artikel-detail');
+          return;
+        }
+        if (hash.startsWith('artikel/')) {
+          setSelectedArticleSlug(hash.replace('artikel/', ''));
+          setCurrentRouteState('artikel-detail');
+          return;
+        }
+
         if (hash === 'admin' || hash === 'penulis' || hash === 'author') {
           setCurrentRouteState('admin');
         } else if (['home', 'profil', 'program', 'fasilitas', 'galeri', 'artikel', 'donasi', 'pendaftaran', 'kontak'].includes(hash)) {
@@ -260,8 +302,12 @@ export const PesantrenProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         // ignore
       }
     };
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
+    window.addEventListener('hashchange', handleUrlChange);
+    window.addEventListener('popstate', handleUrlChange);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlChange);
+      window.removeEventListener('popstate', handleUrlChange);
+    };
   }, []);
 
   // Core Data States with LocalStorage fallback
@@ -1027,21 +1073,31 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
     }
   };
 
-  // Auto-Pull data pertama kali saat aplikasi dimuat jika URL hosting sudah disetel
+  // Auto-Pull data saat aplikasi dimuat atau kembali aktif (untuk perangkat mobile/pengguna lain)
   useEffect(() => {
     if (syncApiUrl && syncApiUrl.startsWith('http')) {
       pullFromHosting(syncApiUrl, true);
     }
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && syncApiUrl && syncApiUrl.startsWith('http')) {
+        pullFromHosting(syncApiUrl, true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [syncApiUrl]);
 
   const setCurrentRoute = (route: NavigationRoute) => {
     setCurrentRouteState(route);
+    if (route !== 'artikel-detail') {
+      setSelectedArticleSlug(null);
+    }
     try {
       if (route === 'admin') {
         window.location.hash = currentUserRole === 'author' ? 'penulis' : 'admin';
       } else if (route === 'home') {
-        if (window.location.hash) {
-          history.pushState(null, '', window.location.pathname + window.location.search);
+        if (window.location.hash || window.location.search) {
+          history.pushState(null, '', window.location.pathname);
         }
       } else {
         window.location.hash = route;
@@ -1055,6 +1111,12 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
   const navigateToArticle = (slug: string) => {
     setSelectedArticleSlug(slug);
     setCurrentRouteState('artikel-detail');
+    try {
+      const newUrl = `${window.location.pathname}?article=${encodeURIComponent(slug)}`;
+      history.pushState({ article: slug }, '', newUrl);
+    } catch {
+      window.location.hash = `artikel-detail/${slug}`;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -1244,17 +1306,32 @@ echo json_encode(["status" => "error", "message" => "Method not allowed"]);
     };
     setArticles(prev => [newArticle, ...prev]);
     showToast('Artikel Berhasil Ditambahkan', `Artikel "${newArticle.title.substring(0, 30)}..." telah ditambahkan.`);
+    setTimeout(() => {
+      if (syncApiUrl && syncApiUrl.startsWith('http')) {
+        pushArticlesToHosting().catch(() => {});
+      }
+    }, 400);
     return newArticle;
   };
 
   const updateArticle = (id: string, updated: Partial<Article>) => {
     setArticles(prev => prev.map(a => a.id === id ? { ...a, ...updated } : a));
     showToast('Artikel Diperbarui', 'Perubahan konten artikel berhasil disimpan.');
+    setTimeout(() => {
+      if (syncApiUrl && syncApiUrl.startsWith('http')) {
+        pushArticlesToHosting().catch(() => {});
+      }
+    }, 400);
   };
 
   const deleteArticle = (id: string) => {
     setArticles(prev => prev.filter(a => a.id !== id));
     showToast('Artikel Dihapus', 'Artikel berhasil dihapus dari daftar publikasi.', 'info');
+    setTimeout(() => {
+      if (syncApiUrl && syncApiUrl.startsWith('http')) {
+        pushArticlesToHosting().catch(() => {});
+      }
+    }, 400);
   };
 
   // Gallery Operations

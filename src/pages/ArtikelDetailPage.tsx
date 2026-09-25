@@ -43,13 +43,19 @@ export const ArtikelDetailPage: React.FC = () => {
     .filter(a => a && a.id !== article.id && (!a.status || a.status === 'Published'))
     .slice(0, 3);
 
+  const getShareUrl = () => {
+    return `${window.location.origin}/?article=${article.slug}`;
+  };
+
   const handleShareWhatsApp = () => {
-    const text = `Baca artikel "${article.title}" dari Markaz Hidayah Qur'an:\n${window.location.origin}/artikel/${article.slug}`;
+    const shareUrl = getShareUrl();
+    const text = `Baca artikel "${article.title}" dari Markaz Hidayah Qur'an:\n${shareUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/artikel/${article.slug}`);
+    const shareUrl = getShareUrl();
+    navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
